@@ -1,0 +1,40 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+
+      // Client-created profiles must not contain a role field. Roles are
+      // assigned only by the Firebase Admin SDK or Firebase Console.
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && !request.resource.data.keys().hasAny(['role']);
+
+      // No client, including an authenticated admin, may add, remove, or
+      // change role. Admin SDK and Firebase Console bypass these client rules.
+      allow update: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasNone(['role'])
+        && ((!request.resource.data.keys().hasAny(['role'])
+          && !resource.data.keys().hasAny(['role']))
+          || request.resource.data.role == resource.data.role);
+
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
