@@ -103,3 +103,37 @@ through the Firebase Admin SDK or Firebase Console.
   for the `users` collection.
 - Any future admin role-management or account-deletion workflow must use a
   trusted server/Admin SDK boundary and must not weaken these client rules.
+
+## ADR-004 — Hybrid Newest Ordering with Matched-Document Cursors
+
+**Date:** 2026-09-15  
+**Status:** Accepted  
+**Phase:** 3
+
+### Decision
+
+When a price range is combined with `newest` sorting, the catalog queries
+Firestore ordered by `createdAt` and applies the price range in memory. The
+repository continues through cursor pages until it fills the requested page or
+exhausts the collection. When a page fills during a raw batch, the cursor is
+set to `lastMatchedDoc`, the last raw document whose product was actually
+returned. When the collection is exhausted before the page fills, the cursor is
+the final raw document read.
+
+### Rationale
+
+- Firestore requires a range-filtered field to be the first `orderBy`, which
+  conflicts with globally correct newest ordering.
+- Returning the raw batch's final cursor after truncating filtered results can
+  skip valid products that were read but not returned.
+- `lastMatchedDoc` preserves exact continuation semantics while keeping newest
+  ordering across the catalog.
+
+### Consequences
+
+- Price-filtered newest queries may read more than one bounded Firestore page,
+  but never load the entire collection into memory.
+- `ProductPage` results never exceed the configured page size.
+- Price sorting continues to use Firestore-compatible range ordering directly.
+- Required Firestore composite indexes must follow the query shapes used by the
+  repository.

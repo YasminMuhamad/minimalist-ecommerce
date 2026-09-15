@@ -89,3 +89,26 @@ the responsive modern navigation layout, and the shared application shell.
   SDK or Firebase Console.
 
 **Verification run:** `npm run typecheck && npm run lint && npm run build` — all pass.
+
+## Phase 3 — Product Catalog, Cloudinary Integration, & Filtering
+
+**Final Outcome:** PASS  
+**Approved On:** 2026-09-15  
+**Review Cycles:** Final approval
+
+Phase 3 was accepted after completing and verifying the Firestore-backed product
+catalog, optimized Cloudinary image delivery, and the responsive discovery UI.
+
+**Accepted areas:**
+
+- Typed product/category models, Firestore repositories, mappers, services, and
+  catalog page/grid/card boundaries.
+- Cloudinary upload validation, optimized transformation URLs, and reusable
+  image rendering.
+- Category and price filtering, newest/price sorting, URL-synchronized filter
+  state, loading/empty/error states, and cursor pagination.
+- Composite-query handling for Firestore range constraints and the hybrid newest
+  query cursor fix using `lastMatchedDoc`, preventing filtered products from
+  being skipped between pages.
+
+**Verification run:** `npm run typecheck && npm run lint && npm run build` — all pass.
