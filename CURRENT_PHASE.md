@@ -1,41 +1,68 @@
+````markdown
 # CURRENT_PHASE.md
 
-# Current Phase — Phase 2: Authentication & Modern Navigation Layout
+# Current Phase — Phase 3: Product Catalog, Cloudinary Integration, & Filtering
 
 > **Status:** Completed (100%)  
-> **Phase:** 2 / 6  
-> **Approved On:** 2026-09-14  
-> **Previous Phase:** Phase 1 — Setup & Project Initialization `[PASS]`  
-> **Primary Objective:** Implement the complete authentication foundation and establish the modern, responsive navigation shell shared across the entire application.
+> **Phase:** 3 / 6  
+> **Approved On:** 2026-09-15  
+> **Previous Phase:** Phase 2 — Authentication & Modern Navigation Layout `[PASS]`  
+> **Primary Objective:** Build the complete Firestore-backed product catalog, integrate Cloudinary for optimized product imagery, and provide performant filtering, sorting, and pagination/infinite-scroll capabilities.
 
 ---
 
 # 1. Goal
 
-Build and stabilize the application's **Authentication Layer** and **Global Navigation Layout** without entering the product catalog, checkout, order management, or admin CRUD implementation.
+Phase 3 transforms the application from a navigation/authentication shell into a functional **product discovery experience**.
 
-Phase 2 has two tightly related objectives:
+The phase must establish a clean separation between:
 
-1. Establish a production-ready Firebase Authentication flow supporting:
-   - Google Authentication.
-   - Email/Password Authentication.
-   - Persistent authentication state.
-   - `user` and `admin` roles.
-   - Protected-route readiness.
+```text
+Firestore
+    ↓
+Repositories
+    ↓
+Data Transformers / Mappers
+    ↓
+Product Services
+    ↓
+Catalog State
+    ↓
+Product Grid / Filters / Sorting
+```
+````
 
-2. Build the complete **Modern Minimalist application shell**, including:
-   - Announcement Bar.
-   - Main Header.
-   - Five category navigation links.
-   - Search action.
-   - Cart action with badge.
-   - User/account action.
-   - AR/EN language toggle.
-   - Light/Dark theme toggle.
-   - Responsive mobile navigation.
-   - Footer.
+and:
 
-The result of this phase should provide every subsequent phase with a stable authentication state and reusable global layout.
+```text
+Product Image
+    ↓
+Cloudinary
+    ↓
+Optimization / Resizing
+    ↓
+Optimized Delivery URL
+    ↓
+Product UI
+```
+
+The completed phase must allow customers to:
+
+- Browse products from Firestore.
+- Browse products by category.
+- View optimized product images.
+- Filter products by category and price.
+- Switch between AR/EN translated product content.
+- Sort products by:
+  - Newest.
+  - Price: Low → High.
+  - Price: High → Low.
+
+- Navigate through product results efficiently.
+- Use the catalog comfortably on mobile, tablet, and desktop.
+- Experience consistent Neutral Minimalist styling.
+
+Phase 3 must establish the catalog/data foundation required by the Product Details, Cart, Checkout, and Admin phases without implementing those later-stage business features prematurely.
 
 ---
 
@@ -43,982 +70,1557 @@ The result of this phase should provide every subsequent phase with a stable aut
 
 ## 2.1 Scope
 
-### Authentication
+### Included
 
-Implement:
-
-- Firebase Email/Password login.
-- Firebase Email/Password registration.
-- Google Sign-In.
-- Logout.
-- Authentication state listener.
-- Persistent current-user state.
-- Auth loading state.
-- Authenticated/unauthenticated state.
-- User role resolution.
-- `user` role.
-- `admin` role.
-- Auth error normalization.
-- Auth Context/provider.
-- Protected-route foundation.
-- User profile document synchronization with Firestore where required.
-
-Authentication must use the Firebase foundation established in Phase 1.
-
----
-
-### Global Navigation
-
-Implement:
-
-- Announcement Bar.
-- Main Header.
-- Desktop navigation.
-- Five category links:
-  1. الملابس / Clothing
-  2. العناية والشخصية / Personal Care
-  3. مستلزمات المنزل / Home Supplies
-  4. أدوات المكتب / Office Tools
-  5. إكسسوارات عامة / General Accessories
-- Search button/action.
-- Cart button/action.
-- Cart item badge.
-- User/account button.
-- Login/Register entry point for guests.
-- Account entry point for authenticated users.
-- Admin entry point only when the authenticated user has `admin` role.
-- Language toggle.
-- Theme toggle.
-- Responsive mobile navigation.
-- Drawer/Sheet-based mobile menu.
-
-Navigation must be implemented as reusable application-level components rather than duplicated inside individual pages.
+- Cloudinary image integration.
+- Product image upload service foundation.
+- Cloudinary transformation/optimization utilities.
+- Firestore product repository.
+- Firestore category repository.
+- Product/category data mappers.
+- Typed product/category models.
+- Product catalog page.
+- Product grid.
+- Product cards.
+- Category filtering.
+- Price filtering.
+- Sorting.
+- AR/EN product content.
+- Pagination and/or infinite scrolling.
+- Loading states.
+- Empty states.
+- Error states.
+- Responsive catalog layout.
+- RTL/LTR support.
+- Light/Dark support.
+- Catalog query/state synchronization.
 
 ---
 
-### Footer
+### Explicitly Excluded
 
-Implement:
+The following are **not** part of Phase 3:
 
-- Quick navigation links.
-- Category links.
-- Social media links/placeholders.
-- Store policy links.
-- Language selector.
-- Currency selector.
-- Responsive footer layout.
+```text
+Product Details business implementation
+Cart business logic
+Checkout
+Coupons
+Order creation
+Order tracking
+Customer account management
+Admin dashboard
+Admin product CRUD UI
+Admin category CRUD UI
+Admin coupon management
+Admin order management
+Real payment processing
+```
 
-The footer must support both Arabic RTL and English LTR layouts.
+Where later phases require a foundation from Phase 3, create only the necessary abstraction/interface rather than implementing the later feature.
 
 ---
 
-## 2.2 File Boundaries
+# 2.2 File Boundaries
 
-### Allowed to Create
+## Allowed to Create
 
-Only create files within the following Phase 2 areas unless a dependency requires an existing shared file to be updated:
+Create files only within the following areas unless an existing shared file must be updated as a direct dependency:
 
 ```text
 src/
 ├── components/
-│   ├── auth/
-│   ├── layout/
-│   │   ├── AnnouncementBar.*
-│   │   ├── Header.*
-│   │   ├── MainNavigation.*
-│   │   ├── MobileNavigation.*
-│   │   ├── HeaderActions.*
-│   │   ├── Footer.*
-│   │   └── AppLayout.*
-│   └── navigation/
-├── contexts/
-│   └── AuthContext.*
+│   ├── catalog/
+│   │   ├── ProductCard.*
+│   │   ├── ProductGrid.*
+│   │   ├── ProductFilters.*
+│   │   ├── ProductSort.*
+│   │   ├── ProductToolbar.*
+│   │   ├── ProductPagination.*
+│   │   ├── ProductInfiniteScroll.*
+│   │   ├── CatalogEmptyState.*
+│   │   └── CatalogSkeleton.*
+│   │
+│   └── cloudinary/
+│       └── OptimizedImage.*
+│
 ├── hooks/
-│   └── useAuth.*
+│   ├── useProducts.*
+│   ├── useCategories.*
+│   └── useCatalogFilters.*
+│
 ├── lib/
-│   └── firebase/
-│       └── auth.*
-├── pages/
-│   └── auth/
-│       ├── Login.*
-│       └── Register.*
-├── routes/
-│   ├── ProtectedRoute.*
-│   └── AdminRoute.*
+│   └── cloudinary/
+│       ├── config.*
+│       ├── upload.*
+│       └── transformations.*
+│
+├── repositories/
+│   ├── productRepository.*
+│   └── categoryRepository.*
+│
 ├── services/
-│   └── auth.*
-└── types/
-    └── auth.*
+│   ├── productService.*
+│   └── categoryService.*
+│
+├── mappers/
+│   ├── productMapper.*
+│   └── categoryMapper.*
+│
+├── pages/
+│   └── storefront/
+│       ├── Catalog.*
+│       └── Category.*
+│
+├── types/
+│   ├── product.*
+│   ├── category.*
+│   ├── catalog.*
+│   └── cloudinary.*
+│
+├── constants/
+│   ├── catalog.*
+│   └── categories.*
+│
+└── utils/
+    ├── product.*
+    └── pricing.*
+```
 
-Exact extensions depend on the project's existing conventions.
+> Exact filenames/extensions may follow the conventions already established by the project. The important constraint is maintaining the responsibility boundaries.
 
-Allowed to Modify
+---
 
-Phase 2 may modify only existing files directly related to:
+## Allowed to Modify
 
-src/App.*
-src/main.*
-src/index.css
+Only modify existing files directly related to:
 
+```text
 src/components/
-src/contexts/
 src/hooks/
-src/lib/firebase/
-src/pages/auth/
-src/routes/
+src/lib/
+src/repositories/
 src/services/
+src/mappers/
+src/pages/storefront/
 src/types/
-
-src/i18n/
 src/constants/
-src/config/
+src/utils/
+src/routes/
+src/i18n/
+src/index.css
+```
 
-Additionally, update only the project-level files required to register Phase 2 changes:
+Environment configuration may be updated only to add the required Cloudinary configuration.
 
+---
+
+## Project-Level Administrative Files
+
+Do not modify unrelated administrative documents as part of implementation.
+
+After successful review, the project manager may update:
+
+```text
 CURRENT_PHASE.md
-Explicitly Out of File Scope
+REVIEW_LOG.md
+DECISIONS.md
+```
 
-Do not implement or modify unrelated business logic for:
+according to the project's established approval process.
 
-Product CRUD
-Product Details
-Product Search Engine
-Cart Business Logic
-Checkout
-Coupons
-Orders
-Order Tracking
-Admin Statistics
-Admin Product Management
-Admin Coupon Management
-Admin Order Management
-Real Payment Gateway
-Cloudinary Product Upload
-Instagram Feed
-Deals of the Day
-Flash Sale Business Logic
+---
 
-These belong to later phases.
+# 2.3 Cloudinary Boundary
 
-3. Architecture Rules
-3.1 Authentication Boundary
+Cloudinary is responsible for:
 
-React components must not directly contain scattered Firebase authentication calls.
+```text
+Image Upload
+Image Delivery
+Image Transformation
+Image Resizing
+Image Optimization
+```
 
-Use the following conceptual flow:
+Firestore is responsible for:
 
-UI
- ↓
-Auth Context / Hook
- ↓
-Auth Service
- ↓
-Firebase Auth
- ↓
-Firestore User Profile
+```text
+Product Metadata
+Product Image URLs / References
+```
 
-Components should consume authentication state through:
+The architecture must remain:
 
-useAuth()
+```text
+Cloudinary
+    ↓
+Optimized Image URL
+    ↓
+Firestore Product Document
+    ↓
+Product Repository
+    ↓
+Product Mapper
+    ↓
+Catalog UI
+```
 
-rather than directly accessing Firebase Auth.
+Do not store image binary data inside Firestore.
 
-3.2 Authentication State
+---
 
-The Auth Context must expose a predictable state similar to:
+# 2.4 Product Data Boundary
 
-user
-role
-loading
-isAuthenticated
-isAdmin
-login()
-register()
-loginWithGoogle()
-logout()
+The repository layer owns Firestore communication.
 
-The exact API may differ according to the existing project architecture, but the responsibilities must remain centralized.
+The UI must not directly execute Firestore queries.
 
-3.3 User Roles
+Preferred architecture:
 
-Supported application roles:
+```text
+ProductGrid
+    ↓
+useProducts
+    ↓
+productService
+    ↓
+productRepository
+    ↓
+Firestore
+```
 
-user
-admin
+The mapper layer converts Firestore documents into application-safe TypeScript models.
 
-Default authenticated users must receive:
+---
 
-user
+# 3. Product Model Requirements
 
-The admin role must not be granted based on a client-side flag supplied by the browser.
-
-Role resolution must ultimately rely on trusted application data/configuration and Firebase security rules.
-
-3.4 Navigation Data
-
-Navigation items should be centralized rather than hard-coded repeatedly.
+The Phase 3 product model must support the catalog and future product-detail/admin requirements.
 
 Conceptual structure:
 
-navigation/
-├── primaryNavigation
-├── footerNavigation
-└── socialLinks
+```ts
+Product {
+  id: string;
 
-Category names should be translation-key based.
+  title: {
+    ar: string;
+    en: string;
+  };
 
-Example:
+  slug?: string;
 
-category.clothing
-category.personalCare
-category.home
-category.office
-category.accessories
-3.5 Responsive Architecture
+  description?: {
+    ar: string;
+    en: string;
+  };
 
-Desktop and mobile navigation should use the same underlying navigation data.
+  categoryId: string;
 
-Navigation Data
-      ↓
- ┌────┴────┐
- ↓         ↓
-Desktop   Mobile
-Header    Drawer/Sheet
+  price: number;
 
-Do not duplicate category definitions between desktop and mobile components.
+  compareAtPrice?: number;
 
-4. Detailed Execution Steps
-Step 1 — Verify Phase 1 Foundation
+  images: ProductImage[];
 
-Before writing Phase 2 code:
+  colors?: ProductOption[];
 
-Confirm Firebase configuration from Phase 1 is working.
-Confirm TypeScript passes.
-Confirm Tailwind works.
-Confirm Shadcn UI works.
-Confirm i18n architecture exists.
-Confirm RTL/LTR architecture exists.
-Confirm theme architecture exists.
-Confirm routing foundation exists.
+  sizes?: ProductOption[];
 
-If Phase 1 infrastructure is broken, fix the minimum required foundation before proceeding.
+  specifications?: Record<string, string>;
 
-Do not silently redesign Phase 1 architecture.
+  stock?: number;
 
-Step 2 — Implement Firebase Auth Service
+  isActive: boolean;
 
-Create a dedicated authentication service.
-
-Implement:
-
-Email/Password Sign In
-Email/Password Registration
-Google Sign In
-Sign Out
-Auth State Listener
-
-Normalize Firebase errors into application-friendly error states.
-
-The UI must never need to understand raw Firebase error codes unless explicitly required.
-
-Step 3 — Implement User Profile Synchronization
-
-After authentication:
-
-Identify the Firebase user.
-Check the corresponding Firestore user document.
-Create the profile when required.
-Preserve existing user information.
-Resolve the user's application role.
-
-Conceptual document:
-
-users/{uid}
-
-Example structure:
-
-{
-  uid,
-  email,
-  displayName,
-  photoURL,
-  role: "user",
-  createdAt,
-  updatedAt
+  createdAt: Timestamp | Date;
+  updatedAt: Timestamp | Date;
 }
+```
 
-Do not overwrite an existing administrator role with the default user role.
+Image model:
 
-Step 4 — Implement Auth Context
+```ts
+ProductImage {
+  url: string;
+  publicId?: string;
+  alt?: {
+    ar?: string;
+    en?: string;
+  };
+  width?: number;
+  height?: number;
+}
+```
 
-Create the application-level Auth Provider.
+> The exact model may follow the existing project's established types. Do not duplicate fields unnecessarily.
 
-It must:
+---
 
-Subscribe to Firebase auth state changes.
-Expose the current user.
-Resolve role.
-Expose authentication methods.
-Expose loading state.
-Clean up Firebase listeners.
-Avoid rendering protected application content before authentication state is resolved.
+# 4. Category Model Requirements
 
-The provider should be mounted at the appropriate application root.
+The category model must support the five approved store categories and future Admin management.
 
-Step 5 — Implement useAuth
+Required conceptual structure:
 
-Create a reusable authentication hook.
+```ts
+Category {
+  id: string;
 
-Expected usage:
+  name: {
+    ar: string;
+    en: string;
+  };
 
-const {
-  user,
-  role,
-  loading,
-  isAuthenticated,
-  isAdmin,
-  login,
-  register,
-  loginWithGoogle,
-  logout
-} = useAuth();
+  slug: string;
 
-The exact API may be adjusted to project conventions.
+  image?: ProductImage;
 
-The important requirement is that authentication state has one clear consumption point.
+  isActive: boolean;
 
-Step 6 — Implement Login UI
+  sortOrder?: number;
 
-Create the login experience supporting:
+  createdAt: Timestamp | Date;
+  updatedAt: Timestamp | Date;
+}
+```
 
-Email.
-Password.
-Google Sign-In.
-Loading state.
-Validation errors.
-Authentication errors.
-Disabled submission while processing.
-Link to registration.
-RTL/LTR support.
-Light/Dark support.
+The initial five categories are:
 
-The interface must follow the Modern Minimalist visual language.
+```text
+1. Clothing
+   الملابس
 
-Do not implement password reset unless it already exists as an approved Phase 2 requirement.
+2. Personal Care
+   العناية والشخصية
 
-Step 7 — Implement Registration UI
+3. Home Supplies
+   مستلزمات المنزل
 
-Create the registration experience supporting:
+4. Office Tools
+   أدوات المكتب
 
-Email.
-Password.
-Password confirmation.
-Validation.
-Firebase registration.
-User profile initialization.
-Loading state.
-Error state.
-Link to login.
+5. General Accessories
+   إكسسوارات عامة
+```
 
-The default newly registered role must be:
+Category display labels must come from the localization/data model rather than being hard-coded into the Product Grid.
 
-user
-Step 8 — Implement Google Authentication
+---
 
-Add Google Sign-In using Firebase Auth.
+# 5. Detailed Execution Steps
 
-Verify:
+# Step 1 — Verify Phase 2 Foundation
 
-Successful Google authentication.
-Existing user handling.
-New user profile creation.
-Display name/photo synchronization.
-Role preservation.
-Logout after Google login.
-Error handling.
+Before implementation:
 
-Google Auth must use the Firebase configuration established in Phase 1.
+- Confirm Phase 2 is `[PASS]`.
+- Confirm Auth Context works.
+- Confirm routing works.
+- Confirm AR/EN switching works.
+- Confirm RTL/LTR works.
+- Confirm Light/Dark themes work.
+- Confirm shared Header/Footer work.
+- Confirm Firebase configuration is centralized.
 
-Step 9 — Implement Protected Route Foundation
+Do not restructure Phase 2 unless a blocking dependency is discovered.
 
-Create:
+---
 
-ProtectedRoute
+# Step 2 — Review Existing Firebase Data Contracts
 
-Behavior:
+Inspect the existing Firestore configuration and determine:
 
-Loading
-   ↓
-Auth resolved?
- ┌─┴──────────┐
-No           Yes
- ↓            ↓
-Loading    Authenticated?
-             ┌──┴──┐
-            No     Yes
-            ↓       ↓
-         Login     Route
+- Product collection name.
+- Category collection name.
+- Timestamp conventions.
+- Document ID conventions.
+- Existing data shape.
+- Existing indexes.
+- Existing Security Rules.
 
-The route guard must not create authentication loops.
+If no product/category schema exists yet, establish the Phase 3 schema according to the models above.
 
-Step 10 — Implement Admin Route Foundation
+Do not silently introduce incompatible duplicate schemas.
 
-Create:
+---
 
-AdminRoute
+# Step 3 — Establish Product Repository
 
-It must verify:
+Create a repository responsible exclusively for product data access.
 
-authenticated
-+
-admin role
+Required operations for this phase:
 
-Unauthorized users must not be able to access admin-only routes.
+```text
+getProducts()
+getProductsByCategory()
+getProductPage()
+```
 
-Important:
+Where appropriate, support query parameters for:
 
-Client-side route protection is not a security boundary. Firebase Security Rules must independently enforce permissions in later implementation/review.
+```text
+category
+price range
+sort
+page/cursor
+limit
+```
 
-Step 11 — Build Announcement Bar
+The repository must not know about React components or UI state.
 
-Implement a reusable announcement bar.
+---
 
-Requirements:
+# Step 4 — Establish Category Repository
 
-Configurable message.
-AR/EN translation support.
-Optional link/action.
-Responsive text.
-Dismiss behavior only if approved by the existing design.
-Light/Dark compatibility.
+Create the category repository.
 
-Example content:
+Required responsibilities:
 
-Free shipping on orders over X
+- Fetch active categories.
+- Fetch categories required by catalog filters.
+- Map Firestore category documents.
+- Handle missing/invalid documents safely.
 
-The message must not be hard-coded inside the component when it can be configured through constants/configuration.
+The repository must not contain UI rendering logic.
 
-Step 12 — Build Main Header
+---
 
-Implement the primary desktop header.
+# Step 5 — Implement Data Mappers
 
-Required elements:
+Create explicit transformation boundaries:
 
-Logo
-Navigation
-Search
-Language
-Theme
-Cart
-User
+```text
+Firestore Product
+        ↓
+productMapper
+        ↓
+Application Product
+```
 
-Design characteristics:
+and:
 
-Minimal.
-Spacious.
-Premium neutral palette.
-Clear typography.
-Subtle borders.
-No unnecessary visual effects.
-Strong focus/hover states.
-Step 13 — Build Five-Category Navigation
+```text
+Firestore Category
+        ↓
+categoryMapper
+        ↓
+Application Category
+```
 
-Display the five approved categories:
+Mappers should:
 
+- Normalize timestamps.
+- Validate required fields.
+- Apply safe defaults where appropriate.
+- Normalize image objects.
+- Preserve AR/EN content.
+- Prevent UI code from depending on raw Firestore document structure.
+
+---
+
+# Step 6 — Implement Product Service
+
+The service layer coordinates repository calls and business-neutral catalog logic.
+
+Responsibilities may include:
+
+- Building catalog queries.
+- Normalizing filters.
+- Normalizing sort options.
+- Validating price ranges.
+- Coordinating pagination.
+- Returning typed results.
+
+Avoid putting presentation-specific logic in the service.
+
+---
+
+# Step 7 — Implement Cloudinary Configuration
+
+Create a centralized Cloudinary configuration layer.
+
+Required configuration should use environment variables.
+
+Conceptual values:
+
+```text
+VITE_CLOUDINARY_CLOUD_NAME
+VITE_CLOUDINARY_UPLOAD_PRESET
+```
+
+Do not expose private Cloudinary credentials in the frontend.
+
+If an unsigned upload preset is used, configure Cloudinary restrictions appropriately.
+
+---
+
+# Step 8 — Implement Cloudinary Upload Service
+
+Create a reusable image upload boundary.
+
+Expected flow:
+
+```text
+File
+ ↓
+Validation
+ ↓
+Cloudinary Upload
+ ↓
+Upload Result
+ ↓
+Optimized URL / public ID
+```
+
+Validate at minimum:
+
+- File type.
+- File size.
+- Upload response.
+- Missing URL.
+- Upload failure.
+
+The service must return typed results rather than exposing raw HTTP responses to components.
+
+---
+
+# Step 9 — Implement Image Optimization
+
+Create a utility for generating optimized Cloudinary URLs.
+
+Support concepts such as:
+
+```text
+Width
+Height
+Crop
+Quality
+Format
+```
+
+Example conceptual transformations:
+
+```text
+Product Card
+→ constrained width
+→ automatic format
+→ automatic quality
+→ crop/fill where appropriate
+```
+
+```text
+Product Listing
+→ responsive dimensions
+→ optimized delivery
+```
+
+Do not deliver unnecessarily large original images to small product cards.
+
+---
+
+# Step 10 — Create `OptimizedImage`
+
+Create a reusable image component responsible for:
+
+- Cloudinary URL transformation.
+- Responsive sizing.
+- Lazy loading where appropriate.
+- Aspect ratio.
+- Object-fit behavior.
+- Alt text.
+- Loading state.
+- Error/fallback state.
+
+The component must remain reusable outside the catalog.
+
+---
+
+# Step 11 — Define Catalog Filter State
+
+Create a typed catalog filter model.
+
+Conceptual structure:
+
+```ts
+CatalogFilters {
+  categoryId?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sort: CatalogSort;
+}
+```
+
+Sort values:
+
+```text
+newest
+price-asc
+price-desc
+```
+
+Do not represent filters through arbitrary untyped strings.
+
+---
+
+# Step 12 — Implement Category Filtering
+
+Provide a category filter capable of:
+
+```text
+All Products
 Clothing
 Personal Care
 Home Supplies
 Office Tools
 General Accessories
+```
 
-Arabic labels must be provided through i18n.
+Requirements:
 
-Navigation must use category identifiers rather than relying only on translated display text.
+- AR/EN labels.
+- Correct category IDs.
+- Active filter state.
+- Reset option.
+- Mobile-friendly controls.
+- URL/query-state synchronization if supported by the existing routing architecture.
 
-Step 14 — Build Header Action Controls
+---
+
+# Step 13 — Implement Price Filtering
+
+Support:
+
+```text
+Minimum Price
+Maximum Price
+```
+
+Requirements:
+
+- Numeric validation.
+- Prevent negative values.
+- Prevent invalid ranges.
+- Clear filter action.
+- Responsive controls.
+- Correct result updates.
+
+If the product dataset uses a single currency, do not introduce currency-conversion logic in this phase.
+
+---
+
+# Step 14 — Implement Sorting
+
+Required sorting:
+
+```text
+Newest
+Price: Low → High
+Price: High → Low
+```
+
+The sorting mechanism must be consistent between:
+
+- Desktop.
+- Mobile.
+- Pagination/infinite-scroll states.
+
+Do not sort only the currently visible page when the intended behavior requires server-side/query-level sorting.
+
+---
+
+# Step 15 — Implement Catalog Hook
+
+Create:
+
+```text
+useProducts()
+```
+
+and, where appropriate:
+
+```text
+useCategories()
+useCatalogFilters()
+```
+
+The hook/state layer should expose:
+
+```text
+products
+loading
+error
+hasMore
+filters
+sort
+setFilters
+setSort
+loadMore
+refresh
+```
+
+The exact API may differ, but UI components should not need direct repository access.
+
+---
+
+# Step 16 — Build Product Card
+
+Create a reusable Neutral Minimalist Product Card.
+
+Required display:
+
+- Product image.
+- Product name.
+- Localized title.
+- Current price.
+- Compare-at/original price when applicable.
+- Discount indication when available.
+- Category where appropriate.
+- Availability indication when available.
+
+The card should support future navigation to:
+
+```text
+/product/:productId
+```
+
+without implementing the complete Product Details page in Phase 3.
+
+---
+
+# Step 17 — Build Product Grid
+
+Create the catalog grid.
+
+Responsive target:
+
+```text
+Mobile
+→ 2 columns where appropriate
+
+Tablet
+→ 2–3 columns
+
+Desktop
+→ 3–4 columns
+```
+
+The exact number may follow the approved design.
+
+The grid must maintain:
+
+- Consistent card dimensions.
+- Consistent spacing.
+- Image aspect ratio.
+- Responsive behavior.
+- RTL/LTR compatibility.
+
+---
+
+# Step 18 — Build Catalog Toolbar
 
 Implement:
 
-Language Toggle
-AR ↔ EN
+```text
+Result Count
+Filter Trigger
+Sort Selector
+```
 
-Requirements:
+Desktop may display filters alongside the grid.
 
-Persist selected locale.
-Update document direction.
-Update translated navigation labels.
-Theme Toggle
-Light ↔ Dark
+Mobile should provide a compact filter/sort interaction.
 
-Requirements:
+Avoid overcrowding the toolbar.
 
-Use existing theme architecture.
-Persist theme.
-Preserve accessibility and contrast.
-Cart
+---
 
-Display:
+# Step 19 — Build Filter UI
 
-Cart icon
-+
-Item count badge
+Desktop:
 
-Phase 2 does not implement cart business logic.
+```text
+Sidebar / Filter Panel
+```
 
-The badge may therefore use the existing cart state interface or a temporary zero/placeholder state until the Cart phase is implemented.
+Mobile:
 
-User
+```text
+Sheet / Drawer
+```
 
-Unauthenticated:
+Both must use the same filter state.
 
-Login / Register
+Required filters:
 
-Authenticated:
+```text
+Category
+Price Range
+```
 
-Account / Profile
-Logout
+Required sorting:
 
-Admin:
+```text
+Newest
+Lowest Price
+Highest Price
+```
 
-Admin Dashboard
+---
 
-The admin option must appear only when role resolution confirms admin.
+# Step 20 — Implement Pagination or Infinite Scroll
 
-Step 15 — Build Responsive Mobile Menu
+Support efficient product browsing.
 
-Implement a Shadcn Sheet/Drawer-based mobile navigation.
+The implementation may use either:
 
-Requirements:
+```text
+Pagination
+```
 
-Open/close behavior.
-Smooth interaction.
-Keyboard accessibility.
-Overlay handling.
-Five category links.
-Search action.
-Account action.
-Language toggle.
-Theme toggle.
-Cart action.
-Admin action when authorized.
+or:
 
-The mobile menu must use the same navigation definitions as desktop.
+```text
+Infinite Scroll
+```
 
-Step 16 — Build Footer
+based on the existing application architecture and dataset characteristics.
 
-Implement a responsive footer containing:
+### Pagination Requirements
 
-Quick Links
-Home.
-Shop.
-Categories.
-Account.
-Orders where applicable.
-Categories
+- Page size is controlled.
+- Current page is tracked.
+- Navigation state is clear.
+- Filters reset pagination.
+- Sorting resets pagination.
 
-The same five category definitions.
+### Infinite Scroll Requirements
 
-Social
+- Cursor-based loading where supported.
+- Duplicate requests prevented.
+- Loading indicator.
+- `hasMore` handling.
+- End-of-results state.
+- Filters reset the loaded result set.
+- Sorting resets the loaded result set.
 
-Provide configurable social links/placeholders.
+Avoid loading the entire product collection into the browser.
 
-Store Policies
+---
 
-Prepare links for:
+# Step 21 — Handle Catalog States
 
-Privacy Policy.
-Terms & Conditions.
-Shipping Policy.
-Return Policy.
+Implement reusable states for:
 
-The actual policy content is outside this phase.
+### Initial Loading
 
-Footer Controls
-Language selector.
-Currency selector.
+Show product skeletons.
 
-Currency selection should establish the UI/state boundary only unless currency conversion/business logic has already been approved elsewhere.
+### Loading More
 
-Step 17 — Build Application Layout
+Show a smaller loading indicator without destroying existing products.
 
-Create a reusable global layout:
+### Empty Results
 
-<AppLayout>
-  <AnnouncementBar />
-  <Header />
+Display a clear message such as:
 
-  <main>
-    {page}
-  </main>
+```text
+No products found.
+```
 
-  <Footer />
-</AppLayout>
+and provide:
 
-The layout must not force authentication-specific behavior into unrelated pages.
+```text
+Clear Filters
+```
 
-Step 18 — Integrate Routing
+when filters caused the empty state.
 
-Connect:
+### Error
 
-Login.
-Register.
-Protected account placeholder.
-Admin placeholder.
-Storefront placeholder.
+Display a recoverable error state with:
 
-Verify navigation transitions.
+```text
+Try Again
+```
 
-Do not implement the actual account or admin business features in this phase.
+where appropriate.
 
-Step 19 — Accessibility Pass
+---
+
+# Step 22 — Implement Localization
+
+Every user-facing catalog string must support:
+
+```text
+AR
+EN
+```
+
+Product titles and category names must select the active locale.
+
+Conceptual:
+
+```ts
+product.title[locale];
+```
+
+Fallback behavior must be defined if a translation is missing.
+
+Do not display:
+
+```text
+undefined
+null
+[object Object]
+```
+
+to users.
+
+---
+
+# Step 23 — RTL/LTR Validation
 
 Verify:
 
-Keyboard navigation.
-Visible focus states.
-Semantic navigation landmarks.
-Button labels.
-Accessible icon buttons.
-Proper form labels.
-Mobile drawer accessibility.
-Dialog/Sheet focus management.
-Sufficient color contrast.
-Screen-reader-friendly authentication errors.
-Step 20 — Responsive & RTL/LTR Pass
+```text
+AR → RTL
+EN → LTR
+```
 
-Test:
+Check:
 
-Mobile
-Tablet
-Desktop
+- Product card text.
+- Filter sidebar.
+- Filter controls.
+- Sort controls.
+- Price fields.
+- Toolbar.
+- Pagination.
+- Drawer positioning.
+- Icons.
+- Badges.
+- Product grid alignment.
 
-and:
+Avoid directional assumptions in CSS.
 
-AR / RTL
-EN / LTR
+---
 
-Check especially:
+# Step 24 — Theme Validation
 
-Header spacing.
-Navigation order.
-Icon placement.
-Mobile drawer alignment.
-Footer columns.
-Search icon.
-Cart badge position.
-User icon.
-Directional icons.
-Step 21 — Final Validation
+Verify the catalog in:
 
-Run the project's available checks:
+```text
+Light Mode
+Dark Mode
+```
 
-npm run lint
-npm run typecheck
-npm run build
+Use the established palette and tokens.
 
-Use the project's actual scripts if their names differ.
+The catalog must retain the intended Neutral Minimalist appearance:
 
-Manually verify the critical user flows before declaring Phase 2 complete.
-
-5. Definition of Done (DoD)
-
-Phase 2 can be marked [PASS] only when all applicable criteria below pass.
-
-Authentication
- Email/password registration works.
- Email/password login works.
- Google Sign-In works.
- Logout works.
- Firebase auth state persists correctly.
- Auth loading state prevents premature protected-route decisions.
- Auth Context is globally available.
- useAuth() works consistently.
- Authenticated users receive a valid application role.
- New users default to user.
- Existing admin role is preserved.
- Auth errors are presented clearly.
- Protected route foundation works.
- Admin route foundation checks the admin role.
-Header
- Announcement Bar exists.
- Announcement content is configurable.
- Logo is displayed.
- Five categories are displayed.
- Search action exists.
- Cart action exists.
- Cart badge is visually implemented.
- User/account action exists.
- Admin entry point is role-aware.
- Header works in Light Mode.
- Header works in Dark Mode.
- Header works in AR/RTL.
- Header works in EN/LTR.
-Mobile Navigation
- Mobile navigation exists.
- Sheet/Drawer opens correctly.
- Sheet/Drawer closes correctly.
- Navigation uses the same category data as desktop.
- Search is accessible.
- Cart is accessible.
- Account is accessible.
- Theme toggle is accessible.
- Language toggle is accessible.
- Admin option is role-aware.
- Keyboard navigation works.
- No horizontal overflow occurs.
-Footer
- Footer exists.
- Quick links exist.
- Category links exist.
- Social links/placeholders exist.
- Policy links exist.
- Language selector exists.
- Currency selector exists.
- Footer is responsive.
- Footer supports RTL/LTR.
- Footer supports Light/Dark themes.
-Visual Quality
- Modern Minimalist design is maintained.
- Primary neutral palette is respected:
+```text
 #FFFFFF
 #F8FAFC
 #0F172A
 #000000
- No unnecessary gradients or decorative effects are introduced.
- Typography hierarchy is consistent.
- Borders and spacing are consistent.
- Interactive states are visually clear.
- Components use the shared design system.
-Technical Quality
- No authentication logic is duplicated across components.
- Firebase calls are centralized appropriately.
- Navigation data is not duplicated between desktop/mobile.
- No unnecessary any types are introduced.
- No secrets are hard-coded.
- No unrelated Phase 3+ business logic is introduced.
- Lint passes.
- TypeScript/typecheck passes.
- Production build passes.
-6. Required Test Matrix
-Authentication Matrix
-Scenario	Expected Result
-Valid Email/Password Login	User authenticated
-Invalid Email	Clear validation/error
-Invalid Password	Clear authentication error
-New Registration	User created with user role
-Password Confirmation Mismatch	Registration blocked
-Google Login	User authenticated
-Existing Google User	Existing profile preserved
-Logout	Auth state cleared
-Auth Refresh	User state restored
-Admin User	admin role resolved
-Normal User	user role resolved
-Unauthenticated Protected Route	Redirect to login
-Non-admin Admin Route	Access denied/redirected
-Auth Loading	Protected content not prematurely rendered
-Navigation Matrix
-Scenario	Expected Result
-Desktop	Full navigation displayed
-Mobile	Drawer/Sheet navigation displayed
-AR	RTL navigation
-EN	LTR navigation
-Light	Light theme
-Dark	Dark theme
-Guest	Login/Register available
-User	Account available
-Admin	Admin entry available
-Cart Empty	Badge shows empty/zero state
-Navigation Link	Correct route transition
-Menu Close	Drawer closes correctly
-7. Known Risks
-Risk 1 — Role Escalation
-Problem
+```
 
-A malicious client could attempt to set:
+Avoid introducing unrelated colors unless required for semantic states such as errors or success.
 
-role = "admin"
+---
 
-through the browser.
+# Step 25 — Responsive Validation
 
-Mitigation
+Test at minimum:
 
-The frontend must never be the final authorization layer.
+```text
+Mobile
+Tablet
+Desktop
+```
 
-Use Firestore Security Rules and/or a trusted administrative mechanism to enforce admin permissions.
+Validate:
 
-Risk 2 — Auth State Race Conditions
-Problem
+- Product grid.
+- Filter controls.
+- Sort controls.
+- Product image dimensions.
+- Text wrapping.
+- Toolbar.
+- Pagination/infinite scrolling.
+- Empty state.
+- Error state.
+- RTL/LTR.
 
-The application may initially interpret an authenticated user as logged out before Firebase finishes restoring the session.
+There must be no unintended horizontal scrolling.
 
-Mitigation
+---
 
-Expose an explicit:
+# Step 26 — Performance Pass
 
-loading
+Verify:
 
-state from Auth Context and delay protected-route decisions until Firebase resolves the initial auth state.
+- Product images are optimized.
+- Images are lazy-loaded where appropriate.
+- Firestore queries are limited.
+- Pagination/cursors are used.
+- Duplicate queries are avoided.
+- Filter changes do not trigger unnecessary requests.
+- Sorting does not reload unrelated application state.
+- Existing products remain visible while loading additional pages.
+- Large original Cloudinary assets are not unnecessarily delivered.
 
-Risk 3 — Google Auth Configuration
-Problem
+---
 
-Google authentication may work locally but fail in another environment due to Firebase authorized-domain configuration.
+# Step 27 — Security Review
 
-Mitigation
+Verify:
 
-Verify the Firebase Authentication provider and authorized domains for every target environment.
+- Firestore reads follow the intended access model.
+- Product data cannot be modified through catalog APIs by unauthorized users.
+- Cloudinary upload configuration does not expose private credentials.
+- Product image URLs are treated as data, not executable content.
+- Client-side filters are not considered security controls.
 
-Risk 4 — Duplicate Navigation Definitions
-Problem
+Admin mutation security remains part of later Admin implementation.
 
-Desktop and mobile menus may develop different labels/routes over time.
+---
 
-Mitigation
+# Step 28 — Automated Validation
 
-Maintain one centralized navigation configuration and render it through both desktop and mobile components.
+Run:
 
-Risk 5 — RTL Layout Regressions
-Problem
+```text
+npm run lint
+npm run typecheck
+npm run build
+```
 
-Icons, spacing, badges, and drawer positioning can remain visually incorrect after direction switching.
+Use equivalent project commands if different.
 
-Mitigation
+Resolve all blocking errors before requesting Phase 3 review.
 
-Use logical CSS properties and test both RTL and LTR during implementation rather than at the end only.
+---
 
-Risk 6 — Theme Inconsistency
-Problem
+# 6. Definition of Done (DoD)
 
-New navigation components may use hard-coded colors that break Dark Mode.
+Phase 3 may be marked `[PASS]` only when all applicable requirements below are satisfied.
 
-Mitigation
+## Cloudinary
 
-Use shared design tokens and theme-aware classes instead of hard-coded component-specific colors.
+- [ ] Cloudinary configuration is centralized.
+- [ ] Required environment variables are configured.
+- [ ] Product image upload service exists.
+- [ ] Upload validation exists.
+- [ ] Upload errors are handled.
+- [ ] Optimized Cloudinary URL generation exists.
+- [ ] Image resizing is supported.
+- [ ] Image quality/format optimization is supported.
+- [ ] `OptimizedImage` or equivalent reusable abstraction exists.
+- [ ] Original unnecessarily large images are not used by default for product cards.
 
-Risk 7 — Cart Badge Coupling
-Problem
+---
 
-The Header may become tightly coupled to unfinished cart business logic.
+## Product Data
 
-Mitigation
+- [ ] Product TypeScript model exists.
+- [ ] Category TypeScript model exists.
+- [ ] Product repository exists.
+- [ ] Category repository exists.
+- [ ] Product service exists.
+- [ ] Category service exists where required.
+- [ ] Product mapper exists.
+- [ ] Category mapper exists.
+- [ ] Raw Firestore structures are not leaked into presentation components.
+- [ ] Product queries are typed.
+- [ ] Category queries are typed.
 
-Define a simple cart-state interface for Phase 2 and allow the future Cart phase to replace its implementation without rewriting Header components.
+---
 
-Risk 8 — Footer Scope Creep
-Problem
+## Product Catalog
 
-Implementing complete policy pages, social integrations, currency conversion, or external APIs would expand Phase 2 unnecessarily.
+- [ ] Catalog page exists.
+- [ ] Products load from Firestore.
+- [ ] Product Grid exists.
+- [ ] Product Card exists.
+- [ ] Product images render through optimized delivery.
+- [ ] Product title is localized.
+- [ ] Product pricing renders correctly.
+- [ ] Discount/original price renders when available.
+- [ ] Product card supports future product-detail navigation.
+- [ ] Responsive grid works.
 
-Mitigation
+---
 
-Implement only the Footer UI and integration boundaries. Full policy content, live social feeds, and currency/business logic remain outside this phase.
+## Filtering
 
-Risk 9 — Authentication Scope Creep
-Problem
+- [ ] Category filter works.
+- [ ] Price minimum works.
+- [ ] Price maximum works.
+- [ ] Invalid price ranges are rejected/normalized.
+- [ ] Filters can be cleared.
+- [ ] Filter state is typed.
+- [ ] Mobile filter UI works.
+- [ ] Desktop filter UI works.
+- [ ] Changing filters resets pagination/infinite-scroll state correctly.
 
-Password reset, email verification, profile editing, MFA, and advanced account settings may expand the phase unexpectedly.
+---
 
-Mitigation
+## Sorting
 
-Phase 2 is limited to:
+- [ ] Newest sorting works.
+- [ ] Lowest-price sorting works.
+- [ ] Highest-price sorting works.
+- [ ] Sorting is applied consistently to loaded results.
+- [ ] Sorting resets pagination/infinite-scroll state correctly.
+- [ ] Sorting works in AR/EN.
+- [ ] Sorting works in RTL/LTR.
 
-Google Auth
-Email/Password Auth
-Auth State
-Roles
-Login
-Registration
-Logout
-Route Protection Foundation
+---
 
-Additional authentication features require an explicit scope decision.
+## Pagination / Infinite Scroll
 
-8. Phase 2 Boundary
-Phase 2 WILL include
-Authentication
-├── Email/Password
-├── Google Auth
-├── Auth Context
-├── Auth State
-├── User/Admin Roles
-├── Login
-├── Registration
-├── Logout
-└── Route Protection Foundation
+- [ ] Product results are not loaded entirely at once.
+- [ ] Page size/limit is controlled.
+- [ ] Pagination or cursor mechanism works.
+- [ ] Duplicate requests are prevented.
+- [ ] Loading-more state exists.
+- [ ] End-of-results state exists.
+- [ ] Filters reset result pagination correctly.
+- [ ] Sorting resets result pagination correctly.
 
-Navigation
-├── Announcement Bar
-├── Header
-├── Five Categories
-├── Search Action
-├── Cart Action + Badge
-├── User Action
-├── Language Toggle
-├── Theme Toggle
-└── Responsive Mobile Menu
+---
 
-Footer
-├── Quick Links
-├── Categories
-├── Social Links
-├── Store Policies
-├── Language Selector
-└── Currency Selector
-Phase 2 WILL NOT include
-Product Catalog
-Product CRUD
-Product Details
-Cloudinary Product Upload
-Cart Business Logic
-Coupons
+## Localization & Direction
+
+- [ ] AR catalog UI works.
+- [ ] EN catalog UI works.
+- [ ] Arabic product titles render correctly.
+- [ ] English product titles render correctly.
+- [ ] Category names are localized.
+- [ ] RTL layout works.
+- [ ] LTR layout works.
+- [ ] No hard-coded directional assumptions remain in catalog components.
+
+---
+
+## Theme
+
+- [ ] Light Mode works.
+- [ ] Dark Mode works.
+- [ ] Product cards are theme-compatible.
+- [ ] Filters are theme-compatible.
+- [ ] Catalog toolbar is theme-compatible.
+- [ ] Empty/loading/error states are theme-compatible.
+- [ ] Neutral Minimalist visual language is preserved.
+
+---
+
+## Quality
+
+- [ ] Loading states exist.
+- [ ] Empty states exist.
+- [ ] Error states exist.
+- [ ] Retry behavior exists where appropriate.
+- [ ] Accessibility labels exist for interactive controls.
+- [ ] Keyboard navigation works.
+- [ ] No horizontal overflow exists.
+- [ ] No unnecessary Phase 4/5 business logic was introduced.
+- [ ] Lint passes.
+- [ ] Typecheck passes.
+- [ ] Production build passes.
+
+---
+
+# 7. Required Validation Matrix
+
+## Product Data
+
+| Scenario                   | Expected Result           |
+| -------------------------- | ------------------------- |
+| Firestore returns products | Products render           |
+| Empty collection           | Empty state               |
+| Firestore failure          | Error state + retry       |
+| Invalid product document   | Mapper handles safely     |
+| Missing optional image     | Image fallback            |
+| Missing translation        | Defined fallback behavior |
+
+---
+
+## Filtering
+
+| Scenario       | Expected Result             |
+| -------------- | --------------------------- |
+| All categories | All active products         |
+| Clothing       | Clothing products only      |
+| Personal Care  | Personal Care products only |
+| Home Supplies  | Home products only          |
+| Office Tools   | Office products only        |
+| Accessories    | Accessories only            |
+| Minimum price  | Products meet minimum       |
+| Maximum price  | Products meet maximum       |
+| Min > Max      | Invalid state prevented     |
+| Clear filters  | Full catalog restored       |
+
+---
+
+## Sorting
+
+| Scenario          | Expected Result             |
+| ----------------- | --------------------------- |
+| Newest            | Newest products first       |
+| Low → High        | Lowest price first          |
+| High → Low        | Highest price first         |
+| Filter + Sort     | Both applied correctly      |
+| Sort + Pagination | Ordering remains consistent |
+
+---
+
+## Localization
+
+| Scenario    | Expected Result        |
+| ----------- | ---------------------- |
+| AR          | Arabic labels/content  |
+| EN          | English labels/content |
+| AR + Filter | RTL filter UI          |
+| EN + Filter | LTR filter UI          |
+| AR + Sort   | Arabic sort UI         |
+| EN + Sort   | English sort UI        |
+
+---
+
+## Responsive
+
+| Device      | Expected Result                  |
+| ----------- | -------------------------------- |
+| Mobile      | Compact toolbar + mobile filters |
+| Tablet      | Responsive grid                  |
+| Desktop     | Full catalog/filter layout       |
+| Mobile RTL  | Correct drawer/direction         |
+| Desktop RTL | Correct sidebar/direction        |
+
+---
+
+# 8. Known Risks
+
+## Risk 1 — Firestore Query Limitations
+
+### Problem
+
+Firestore does not behave like a traditional SQL database for arbitrary multi-field filtering and sorting.
+
+Combining category, price, and sorting requirements may require specific query/index strategies.
+
+### Mitigation
+
+- Design queries deliberately.
+- Avoid fetching the complete collection and filtering in React.
+- Add required Firestore indexes.
+- Use query-compatible filter combinations.
+- Document any unavoidable client-side transformation.
+
+---
+
+## Risk 2 — Incorrect Pagination
+
+### Problem
+
+Offset-based pagination can become inefficient or inconsistent when products are inserted/updated.
+
+### Mitigation
+
+Prefer Firestore cursor-based pagination where practical:
+
+```text
+limit()
+startAfter()
+```
+
+Keep the cursor associated with the active query state.
+
+---
+
+## Risk 3 — Inconsistent Sorting Across Pages
+
+### Problem
+
+Sorting one page locally can result in globally incorrect ordering.
+
+### Mitigation
+
+Perform sorting at the Firestore/query layer whenever the data model and query constraints permit it.
+
+---
+
+## Risk 4 — Cloudinary Oversized Images
+
+### Problem
+
+Serving original images directly can increase bandwidth and reduce catalog performance.
+
+### Mitigation
+
+Use Cloudinary transformations for:
+
+- Width.
+- Height.
+- Quality.
+- Format.
+- Responsive sizing.
+
+---
+
+## Risk 5 — Cloudinary Security
+
+### Problem
+
+Frontend applications cannot safely contain private Cloudinary API secrets.
+
+### Mitigation
+
+Use only appropriate client-side configuration such as an unsigned upload preset, with strict Cloudinary restrictions.
+
+Private operations should use a trusted backend mechanism if required later.
+
+---
+
+## Risk 6 — Data Model Drift
+
+### Problem
+
+Firestore documents may evolve independently from TypeScript models.
+
+### Mitigation
+
+Use mappers as the explicit boundary between Firestore and application models.
+
+Do not access arbitrary document properties throughout UI components.
+
+---
+
+## Risk 7 — Translation Fallbacks
+
+### Problem
+
+A product may contain an Arabic title but no English title, or vice versa.
+
+### Mitigation
+
+Define deterministic fallback behavior before rendering.
+
+Never allow missing translations to render as raw `undefined`/`null`.
+
+---
+
+## Risk 8 — Filter State Complexity
+
+### Problem
+
+Category, price, sorting, pagination, and locale can create race conditions or stale result sets.
+
+### Mitigation
+
+Treat the complete catalog query as a derived state:
+
+```text
+Category
++
+Price
++
+Sort
++
+Pagination Cursor
+=
+Catalog Query
+```
+
+Whenever the query-defining filters change, reset the pagination state.
+
+---
+
+## Risk 9 — Duplicate Infinite-Scroll Requests
+
+### Problem
+
+Rapid scrolling can trigger multiple simultaneous requests for the same page/cursor.
+
+### Mitigation
+
+Maintain an explicit loading guard and cursor state.
+
+Do not request another page while the current page is being fetched.
+
+---
+
+## Risk 10 — Phase Scope Creep
+
+### Problem
+
+Product Catalog implementation can easily expand into Product Details, Cart, or Admin CRUD.
+
+### Mitigation
+
+Phase 3 ends at:
+
+```text
+Catalog Discovery
++
+Cloudinary Image Infrastructure
++
+Filtering
++
+Sorting
++
+Pagination / Infinite Scroll
+```
+
+Any deeper product management or purchasing functionality belongs to subsequent phases.
+
+---
+
+# 9. Phase Boundary
+
+## Phase 3 WILL include
+
+```text
+Cloudinary
+├── Configuration
+├── Upload Service
+├── Image Optimization
+├── Resizing
+└── Optimized Image Component
+
+Data Layer
+├── Product Repository
+├── Category Repository
+├── Product Service
+├── Category Service
+├── Product Mapper
+└── Category Mapper
+
+Catalog
+├── Catalog Page
+├── Product Grid
+├── Product Card
+├── Category Filter
+├── Price Filter
+├── Sort
+├── Pagination / Infinite Scroll
+├── Loading States
+├── Empty States
+└── Error States
+
+Compatibility
+├── AR / EN
+├── RTL / LTR
+├── Light / Dark
+└── Responsive Mobile / Tablet / Desktop
+```
+
+---
+
+## Phase 3 WILL NOT include
+
+```text
+Product Details Implementation
+Cart
 Checkout
-Payment Processing
-Order Creation
+Coupons
+Orders
 Order Tracking
 Account Management
-Admin Statistics
+Admin Dashboard
 Admin Product CRUD
+Admin Category CRUD
 Admin Coupon CRUD
 Admin Order Management
+Real Payment Gateway
+```
 
-These remain assigned to subsequent phases according to APP_ROADMAP.md.
+---
 
-9. Phase Exit Criteria
+# 10. Performance Acceptance Criteria
 
-Before updating the phase status to:
+The catalog should follow these principles:
 
-Phase 2 [PASS]
+```text
+DO:
+- Query only required products.
+- Use pagination/cursors.
+- Optimize images through Cloudinary.
+- Lazy-load appropriate images.
+- Avoid duplicate requests.
+- Cache/reuse category data where appropriate.
+- Keep existing products visible during load-more operations.
 
-confirm all of the following:
+DO NOT:
+- Fetch the entire product collection by default.
+- Download original high-resolution images for thumbnails.
+- Filter thousands of products entirely in the browser.
+- Trigger duplicate Firestore requests on every render.
+- Reset the entire page unnecessarily when loading another page.
+```
 
-[PASS] Firebase Email/Password Authentication
-[PASS] Firebase Google Authentication
-[PASS] Auth Context
-[PASS] Auth State Persistence
-[PASS] User Role
-[PASS] Admin Role
-[PASS] Protected Route Foundation
-[PASS] Admin Route Foundation
+---
 
-[PASS] Announcement Bar
-[PASS] Main Header
-[PASS] Five Category Navigation
-[PASS] Search Action
-[PASS] Cart Action + Badge
-[PASS] User Action
-[PASS] Language Toggle
-[PASS] Theme Toggle
-[PASS] Responsive Mobile Menu
+# 11. Security Acceptance Criteria
 
-[PASS] Footer
-[PASS] Footer Navigation
-[PASS] Social Links
-[PASS] Policy Links
-[PASS] Footer Language Selector
-[PASS] Footer Currency Selector
+The following principles must remain enforced:
 
-[PASS] AR / RTL
-[PASS] EN / LTR
+```text
+Firestore
+→ Catalog reads only expose intended product/category data.
+
+Cloudinary
+→ No private API secret is shipped to the browser.
+
+Frontend
+→ Filters and sorting are UX/query mechanisms, not security controls.
+
+Admin mutations
+→ Remain outside Phase 3 and must later be protected independently.
+```
+
+---
+
+# 12. Phase Exit Criteria
+
+Before requesting Phase 3 review, verify:
+
+```text
+[PASS] Product Model
+[PASS] Category Model
+[PASS] Product Repository
+[PASS] Category Repository
+[PASS] Product Mapper
+[PASS] Category Mapper
+[PASS] Product Service
+
+[PASS] Cloudinary Configuration
+[PASS] Cloudinary Upload Boundary
+[PASS] Image Optimization
+[PASS] Responsive Image Delivery
+
+[PASS] Product Catalog Page
+[PASS] Product Grid
+[PASS] Product Card
+[PASS] Category Filtering
+[PASS] Price Filtering
+[PASS] Newest Sorting
+[PASS] Low-to-High Sorting
+[PASS] High-to-Low Sorting
+
+[PASS] Pagination / Infinite Scroll
+[PASS] Loading States
+[PASS] Empty States
+[PASS] Error States
+
+[PASS] AR
+[PASS] EN
+[PASS] RTL
+[PASS] LTR
 [PASS] Light Mode
 [PASS] Dark Mode
 [PASS] Mobile
@@ -1028,48 +1630,62 @@ confirm all of the following:
 [PASS] Lint
 [PASS] Typecheck
 [PASS] Production Build
-[PASS] No Phase 3+ Scope Leakage
-10. Handoff to Phase 3
+[PASS] No Scope Leakage
+```
 
-After Phase 2 receives [PASS], the project should have:
+---
 
-Stable Authentication
+# 13. Handoff to Phase 4
+
+Once Phase 3 receives `[PASS]`, the project should provide Phase 4 with:
+
+```text
+Firestore-backed Product Catalog
         +
-User/Admin Role Foundation
+Typed Product/Category Models
         +
-Protected Routes
+Repository/Data Access Layer
         +
-Global Application Layout
+Cloudinary Image Infrastructure
         +
-Responsive Header
+Optimized Product Images
         +
-Responsive Mobile Navigation
+Category Filtering
         +
-Footer
+Price Filtering
+        +
+Sorting
+        +
+Efficient Pagination/Infinite Scroll
+        +
+Responsive Product Grid
         +
 AR/EN
         +
 RTL/LTR
         +
 Light/Dark
-        +
-Shared Navigation Configuration
+```
 
-The project is then ready for:
+The next phase can then consume the product model and catalog infrastructure to implement the **Product Details, Cart, Coupons, Checkout, and Order flow** without rebuilding the catalog foundation.
 
-Phase 3 — Catalog, Product Experience & Media Integration
+---
 
-Phase 3 will consume the authentication and layout foundations created here rather than replacing them.
+# Phase 3 Status
 
-Phase 2 Status
+```text
 Current Status: IN PROGRESS
 
 Previous Phase:
-Phase 1 — Setup & Project Initialization [PASS]
+Phase 2 — Authentication & Modern Navigation Layout [PASS]
 
 Current Phase:
-Phase 2 — Authentication & Modern Navigation Layout
+Phase 3 — Product Catalog, Cloudinary Integration, & Filtering
 
 Next Phase:
-Phase 3 — Catalog, Product Experience & Media Integration
+Phase 4 — Product Details, Cart, Checkout & Orders
+```
+
+```
+
 ```

@@ -33,6 +33,34 @@ export interface TranslationResource {
     skipToContent: string
   }
   category: Record<CategoryId, string>
+  catalog: {
+    title: string
+    subtitle: string
+    results: string
+    filters: string
+    clearFilters: string
+    allProducts: string
+    minPrice: string
+    maxPrice: string
+    apply: string
+    sort: string
+    newest: string
+    priceRangeNewestNote: string
+    priceAsc: string
+    priceDesc: string
+    loading: string
+    loadingMore: string
+    empty: string
+    emptyFiltered: string
+    error: string
+    retry: string
+    loadMore: string
+    end: string
+    imageUnavailable: string
+    inStock: string
+    soldOut: string
+    discount: string
+  }
   auth: {
     loginTitle: string
     loginSubtitle: string

@@ -5,6 +5,7 @@ import { Login } from "@/pages/auth/Login";
 import { Register } from "@/pages/auth/Register";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { AdminRoute } from "./AdminRoute";
+import { Catalog, Category } from "@/pages/storefront/Catalog";
 
 const page = (
   translationKey: Parameters<typeof RoutePlaceholder>[0]["translationKey"],
@@ -14,9 +15,9 @@ export const router = createBrowserRouter([
   {
     element: <AppLayout />,
     children: [
-      { path: "/", element: page("shop") },
-      { path: "/shop", element: page("shop") },
-      { path: "/category/:categoryId", element: page("category") },
+      { path: "/", element: <Catalog /> },
+      { path: "/shop", element: <Catalog /> },
+      { path: "/category/:categoryId", element: <Category /> },
       { path: "/product/:productId", element: page("product") },
       { path: "/cart", element: page("cart") },
       { path: "/checkout", element: page("checkout") },

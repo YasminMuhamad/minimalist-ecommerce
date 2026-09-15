@@ -29,6 +29,9 @@ export const ar: TranslationResource = {
     office: 'أدوات المكتب',
     accessories: 'إكسسوارات عامة',
   },
+  catalog: {
+    title: 'أساسيات مختارة', subtitle: 'مجموعة مدروسة للحياة اليومية.', results: 'منتجات', filters: 'الفلاتر', clearFilters: 'مسح الفلاتر', allProducts: 'جميع المنتجات', minPrice: 'الحد الأدنى للسعر', maxPrice: 'الحد الأعلى للسعر', apply: 'تطبيق الفلاتر', sort: 'ترتيب حسب', newest: 'الأحدث', priceRangeNewestNote: 'يتم الحفاظ على ترتيب الأحدث أثناء التصفية حسب السعر.', priceAsc: 'السعر: من الأقل للأعلى', priceDesc: 'السعر: من الأعلى للأقل', loading: 'جارٍ تحميل المنتجات…', loadingMore: 'جارٍ تحميل المزيد…', empty: 'لم يتم العثور على منتجات.', emptyFiltered: 'لا توجد منتجات تطابق هذه الفلاتر.', error: 'تعذر تحميل الكتالوج.', retry: 'حاول مجدداً', loadMore: 'تحميل المزيد', end: 'وصلت إلى نهاية النتائج.', imageUnavailable: 'الصورة غير متاحة', inStock: 'متوفر', soldOut: 'نفد المخزون', discount: 'خصم',
+  },
   auth: {
     loginTitle: 'أهلاً بعودتك',
     loginSubtitle: 'سجّل دخولك للمتابعة إلى حسابك.',

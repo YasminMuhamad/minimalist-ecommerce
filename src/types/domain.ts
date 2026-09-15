@@ -24,37 +24,6 @@ export interface User {
   createdAt?: string
 }
 
-export interface Category {
-  id: string
-  name: string
-  slug: string
-  description?: string
-  imageUrl?: string
-  isActive: boolean
-}
-
-export interface ProductVariant {
-  id: string
-  name: string
-  value: string
-  stock: number
-}
-
-export interface Product {
-  id: string
-  categoryId: string
-  name: string
-  slug: string
-  description?: string
-  price: number
-  compareAtPrice?: number
-  currency: Currency
-  imageUrls: string[]
-  variants?: ProductVariant[]
-  stock: number
-  isActive: boolean
-}
-
 export interface CartItem {
   productId: string
   quantity: number

@@ -29,6 +29,9 @@ export const en: TranslationResource = {
     office: 'Office Tools',
     accessories: 'Accessories',
   },
+  catalog: {
+    title: 'Shop essentials', subtitle: 'A considered selection for everyday living.', results: 'products', filters: 'Filters', clearFilters: 'Clear filters', allProducts: 'All products', minPrice: 'Minimum price', maxPrice: 'Maximum price', apply: 'Apply filters', sort: 'Sort by', newest: 'Newest', priceRangeNewestNote: 'Newest order is preserved while filtering by price.', priceAsc: 'Price: Low to high', priceDesc: 'Price: High to low', loading: 'Loading products…', loadingMore: 'Loading more…', empty: 'No products found.', emptyFiltered: 'No products match these filters.', error: 'We could not load the catalog.', retry: 'Try again', loadMore: 'Load more', end: 'You have reached the end.', imageUnavailable: 'Image unavailable', inStock: 'In stock', soldOut: 'Sold out', discount: 'off',
+  },
   auth: {
     loginTitle: 'Welcome back',
     loginSubtitle: 'Sign in to continue to your account.',
