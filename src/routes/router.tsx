@@ -6,6 +6,8 @@ import { Register } from "@/pages/auth/Register";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { AdminRoute } from "./AdminRoute";
 import { Catalog, Category } from "@/pages/storefront/Catalog";
+import { ProductDetails } from "@/pages/storefront/ProductDetails";
+import { Checkout } from "@/pages/storefront/Checkout";
 
 const page = (
   translationKey: Parameters<typeof RoutePlaceholder>[0]["translationKey"],
@@ -18,9 +20,9 @@ export const router = createBrowserRouter([
       { path: "/", element: <Catalog /> },
       { path: "/shop", element: <Catalog /> },
       { path: "/category/:categoryId", element: <Category /> },
-      { path: "/product/:productId", element: page("product") },
+      { path: "/product/:productId", element: <ProductDetails /> },
       { path: "/cart", element: page("cart") },
-      { path: "/checkout", element: page("checkout") },
+      { path: "/checkout", element: <Checkout /> },
       { path: "/search", element: page("shop") },
       { path: "/login", element: <Login /> },
       { path: "/register", element: <Register /> },

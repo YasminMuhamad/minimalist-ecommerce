@@ -1,4 +1,4 @@
-import { collection, getDocs, limit, orderBy, query, startAfter, where, type DocumentData, type QueryConstraint, type QueryDocumentSnapshot } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, limit, orderBy, query, startAfter, where, type DocumentData, type QueryConstraint, type QueryDocumentSnapshot } from 'firebase/firestore'
 import { getFirestoreService } from '@/lib/firebase/firestore'
 import { mapProduct } from '@/mappers/productMapper'
 import type { CatalogFilters, ProductPage } from '@/types'
@@ -6,6 +6,13 @@ import type { CatalogFilters, ProductPage } from '@/types'
 export interface ProductPageRequest extends CatalogFilters {
   pageSize?: number
   cursor?: QueryDocumentSnapshot<DocumentData>
+}
+
+export async function getProductById(id: string) {
+  const snapshot = await getDoc(doc(getFirestoreService(), 'products', id))
+  if (!snapshot.exists()) return null
+  const product = mapProduct(snapshot.id, snapshot.data())
+  return product?.isActive ? product : null
 }
 
 export async function getProductPage({ categoryId, minPrice, maxPrice, sort, pageSize = 12, cursor }: ProductPageRequest): Promise<ProductPage & { cursor?: QueryDocumentSnapshot<DocumentData> }> {
