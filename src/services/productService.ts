@@ -1,4 +1,4 @@
-import { getProductPage, type ProductPageRequest } from '@/repositories/productRepository'
+import { getProductById, getProductPage, type ProductPageRequest } from '@/repositories/productRepository'
 import type { CatalogFilters } from '@/types'
 
 export function normalizeFilters(filters: CatalogFilters): CatalogFilters {
@@ -10,3 +10,5 @@ export function normalizeFilters(filters: CatalogFilters): CatalogFilters {
 export function getCatalogPage(filters: CatalogFilters, cursor?: ProductPageRequest['cursor']): ReturnType<typeof getProductPage> {
   return getProductPage({ ...normalizeFilters(filters), cursor })
 }
+
+export { getProductById }

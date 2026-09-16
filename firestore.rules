@@ -33,6 +33,14 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /orders/{orderId} {
+      allow create: if request.resource.data.userId == null
+        || (signedIn() && request.resource.data.userId == request.auth.uid);
+      allow read: if signedIn()
+        && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update, delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

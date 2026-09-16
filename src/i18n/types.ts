@@ -61,6 +61,56 @@ export interface TranslationResource {
     soldOut: string
     discount: string
   }
+  productDetails: {
+    backToShop: string
+    description: string
+    size: string
+    color: string
+    selectOption: string
+    inStock: string
+    lowStock: string
+    soldOut: string
+    addToCart: string
+    addedToCart: string
+    quantity: string
+    unavailable: string
+    notFound: string
+    loadError: string
+  }
+  cart: {
+    title: string
+    empty: string
+    continueShopping: string
+    checkout: string
+    remove: string
+    subtotal: string
+    decrease: string
+    increase: string
+    selected: string
+  }
+  checkout: {
+    title: string
+    shipping: string
+    orderSummary: string
+    fullName: string
+    phone: string
+    email: string
+    address: string
+    city: string
+    country: string
+    postalCode: string
+    notes: string
+    placeOrder: string
+    placingOrder: string
+    required: string
+    invalidEmail: string
+    orderError: string
+    emptyCart: string
+    successTitle: string
+    successText: string
+    orderReference: string
+    continue: string
+  }
   auth: {
     loginTitle: string
     loginSubtitle: string

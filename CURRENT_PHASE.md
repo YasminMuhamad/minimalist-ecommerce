@@ -1,1037 +1,1019 @@
-````markdown
+````md
 # CURRENT_PHASE.md
 
-# Current Phase — Phase 3: Product Catalog, Cloudinary Integration, & Filtering
+# E-commerce Web App — Current Phase
 
-> **Status:** Completed (100%)  
-> **Phase:** 3 / 6  
-> **Approved On:** 2026-09-15  
-> **Previous Phase:** Phase 2 — Authentication & Modern Navigation Layout `[PASS]`  
-> **Primary Objective:** Build the complete Firestore-backed product catalog, integrate Cloudinary for optimized product imagery, and provide performant filtering, sorting, and pagination/infinite-scroll capabilities.
+**Phase:** Phase 4 — Product Details, Cart & Checkout Flow
+**Status:** Completed (100%)
+**Approved On:** 2026-09-16
+**Previous Phase:** Phase 3 — Product Catalog, Cloudinary Integration, & Filtering `[PASS]`
+**Next Phase:** Phase 5 — Admin Dashboard & Store Management
 
 ---
 
-# 1. Goal
+## 1. Goals
 
-Phase 3 transforms the application from a navigation/authentication shell into a functional **product discovery experience**.
+The goal of Phase 4 is to transform the catalog browsing experience into a complete purchasing flow:
 
-The phase must establish a clean separation between:
-
-```text
-Firestore
-    ↓
-Repositories
-    ↓
-Data Transformers / Mappers
-    ↓
-Product Services
-    ↓
-Catalog State
-    ↓
-Product Grid / Filters / Sorting
-```
-````
-
-and:
-
-```text
-Product Image
-    ↓
-Cloudinary
-    ↓
-Optimization / Resizing
-    ↓
-Optimized Delivery URL
-    ↓
-Product UI
-```
-
-The completed phase must allow customers to:
-
-- Browse products from Firestore.
-- Browse products by category.
-- View optimized product images.
-- Filter products by category and price.
-- Switch between AR/EN translated product content.
-- Sort products by:
-  - Newest.
-  - Price: Low → High.
-  - Price: High → Low.
-
-- Navigate through product results efficiently.
-- Use the catalog comfortably on mobile, tablet, and desktop.
-- Experience consistent Neutral Minimalist styling.
-
-Phase 3 must establish the catalog/data foundation required by the Product Details, Cart, Checkout, and Admin phases without implementing those later-stage business features prematurely.
+1. Build the Product Details page at `/product/:id`.
+2. Provide an advanced Cloudinary-powered product image gallery.
+3. Support product variants such as size and color.
+4. Display accurate stock/availability state.
+5. Allow direct add-to-cart from the Product Details page.
+6. Implement centralized cart state management.
+7. Persist cart data locally for guests.
+8. Synchronize cart state for authenticated users where supported by the approved architecture.
+9. Provide quantity modification and item removal.
+10. Implement a global Cart Drawer/Modal accessible from the application shell.
+11. Build the Checkout flow with shipping details and order summary.
+12. Create orders in Firestore after successful checkout.
+13. Clear the cart only after successful order creation.
+14. Preserve the existing AR/EN, RTL/LTR, Light/Dark, responsive, and Modern Minimalist design systems.
+15. Keep payment processing mocked/placeholder-only unless a separate payment integration is explicitly approved.
 
 ---
 
 # 2. Scope & File Boundaries
 
-## 2.1 Scope
+## 2.1 In Scope
 
-### Included
+### A. Product Details Page
 
-- Cloudinary image integration.
-- Product image upload service foundation.
-- Cloudinary transformation/optimization utilities.
-- Firestore product repository.
-- Firestore category repository.
-- Product/category data mappers.
-- Typed product/category models.
-- Product catalog page.
-- Product grid.
-- Product cards.
-- Category filtering.
-- Price filtering.
-- Sorting.
-- AR/EN product content.
-- Pagination and/or infinite scrolling.
-- Loading states.
-- Empty states.
-- Error states.
-- Responsive catalog layout.
-- RTL/LTR support.
-- Light/Dark support.
-- Catalog query/state synchronization.
+Route:
+
+```text
+/product/:id
+```
+````
+
+Responsibilities:
+
+- Load a single product by ID.
+- Display localized product title and description.
+- Display category information.
+- Display current price and compare-at/original price where available.
+- Display discount information where applicable.
+- Display stock/availability state.
+- Display Cloudinary product image gallery.
+- Support primary image + thumbnails.
+- Support enlarged/preview image interaction where appropriate.
+- Support responsive gallery behavior.
+- Support product variants:
+  - Size
+  - Color
+  - Other approved variant structures if already present in the product model.
+
+- Validate required variant selection before adding to cart.
+- Prevent adding quantities greater than available stock.
+- Provide quantity selector.
+- Provide direct **Add to Cart** action.
+- Provide appropriate loading, error, unavailable, and missing-product states.
+- Preserve AR/EN localization and RTL/LTR behavior.
 
 ---
 
-### Explicitly Excluded
+## 2.2 Cart State Management
 
-The following are **not** part of Phase 3:
+A centralized cart state layer must be introduced.
 
-```text
-Product Details business implementation
-Cart business logic
-Checkout
-Coupons
-Order creation
-Order tracking
-Customer account management
-Admin dashboard
-Admin product CRUD UI
-Admin category CRUD UI
-Admin coupon management
-Admin order management
-Real payment processing
-```
+The implementation may use:
 
-Where later phases require a foundation from Phase 3, create only the necessary abstraction/interface rather than implementing the later feature.
+- React Context + reducer, or
+- Zustand,
 
----
+based on the architecture already established by the project.
 
-# 2.2 File Boundaries
+The cart must support:
 
-## Allowed to Create
+- Add item.
+- Remove item.
+- Increase quantity.
+- Decrease quantity.
+- Set quantity directly where appropriate.
+- Clear cart.
+- Calculate item subtotal.
+- Calculate cart subtotal.
+- Track total item quantity.
+- Preserve selected product variants.
+- Persist guest cart in `localStorage`.
+- Restore cart after page refresh.
+- Handle authenticated-user synchronization according to the approved persistence strategy.
 
-Create files only within the following areas unless an existing shared file must be updated as a direct dependency:
+### Cart Item Concept
 
-```text
-src/
-├── components/
-│   ├── catalog/
-│   │   ├── ProductCard.*
-│   │   ├── ProductGrid.*
-│   │   ├── ProductFilters.*
-│   │   ├── ProductSort.*
-│   │   ├── ProductToolbar.*
-│   │   ├── ProductPagination.*
-│   │   ├── ProductInfiniteScroll.*
-│   │   ├── CatalogEmptyState.*
-│   │   └── CatalogSkeleton.*
-│   │
-│   └── cloudinary/
-│       └── OptimizedImage.*
-│
-├── hooks/
-│   ├── useProducts.*
-│   ├── useCategories.*
-│   └── useCatalogFilters.*
-│
-├── lib/
-│   └── cloudinary/
-│       ├── config.*
-│       ├── upload.*
-│       └── transformations.*
-│
-├── repositories/
-│   ├── productRepository.*
-│   └── categoryRepository.*
-│
-├── services/
-│   ├── productService.*
-│   └── categoryService.*
-│
-├── mappers/
-│   ├── productMapper.*
-│   └── categoryMapper.*
-│
-├── pages/
-│   └── storefront/
-│       ├── Catalog.*
-│       └── Category.*
-│
-├── types/
-│   ├── product.*
-│   ├── category.*
-│   ├── catalog.*
-│   └── cloudinary.*
-│
-├── constants/
-│   ├── catalog.*
-│   └── categories.*
-│
-└── utils/
-    ├── product.*
-    └── pricing.*
-```
-
-> Exact filenames/extensions may follow the conventions already established by the project. The important constraint is maintaining the responsibility boundaries.
-
----
-
-## Allowed to Modify
-
-Only modify existing files directly related to:
-
-```text
-src/components/
-src/hooks/
-src/lib/
-src/repositories/
-src/services/
-src/mappers/
-src/pages/storefront/
-src/types/
-src/constants/
-src/utils/
-src/routes/
-src/i18n/
-src/index.css
-```
-
-Environment configuration may be updated only to add the required Cloudinary configuration.
-
----
-
-## Project-Level Administrative Files
-
-Do not modify unrelated administrative documents as part of implementation.
-
-After successful review, the project manager may update:
-
-```text
-CURRENT_PHASE.md
-REVIEW_LOG.md
-DECISIONS.md
-```
-
-according to the project's established approval process.
-
----
-
-# 2.3 Cloudinary Boundary
-
-Cloudinary is responsible for:
-
-```text
-Image Upload
-Image Delivery
-Image Transformation
-Image Resizing
-Image Optimization
-```
-
-Firestore is responsible for:
-
-```text
-Product Metadata
-Product Image URLs / References
-```
-
-The architecture must remain:
-
-```text
-Cloudinary
-    ↓
-Optimized Image URL
-    ↓
-Firestore Product Document
-    ↓
-Product Repository
-    ↓
-Product Mapper
-    ↓
-Catalog UI
-```
-
-Do not store image binary data inside Firestore.
-
----
-
-# 2.4 Product Data Boundary
-
-The repository layer owns Firestore communication.
-
-The UI must not directly execute Firestore queries.
-
-Preferred architecture:
-
-```text
-ProductGrid
-    ↓
-useProducts
-    ↓
-productService
-    ↓
-productRepository
-    ↓
-Firestore
-```
-
-The mapper layer converts Firestore documents into application-safe TypeScript models.
-
----
-
-# 3. Product Model Requirements
-
-The Phase 3 product model must support the catalog and future product-detail/admin requirements.
+A cart item should contain enough immutable product information to render the cart safely without relying exclusively on the current Product Details page.
 
 Conceptual structure:
 
 ```ts
-Product {
-  id: string;
-
+CartItem {
+  productId: string;
   title: {
     ar: string;
     en: string;
   };
-
-  slug?: string;
-
-  description?: {
-    ar: string;
-    en: string;
-  };
-
-  categoryId: string;
-
-  price: number;
-
-  compareAtPrice?: number;
-
-  images: ProductImage[];
-
-  colors?: ProductOption[];
-
-  sizes?: ProductOption[];
-
-  specifications?: Record<string, string>;
-
-  stock?: number;
-
-  isActive: boolean;
-
-  createdAt: Timestamp | Date;
-  updatedAt: Timestamp | Date;
-}
-```
-
-Image model:
-
-```ts
-ProductImage {
-  url: string;
-  publicId?: string;
-  alt?: {
-    ar?: string;
-    en?: string;
-  };
-  width?: number;
-  height?: number;
-}
-```
-
-> The exact model may follow the existing project's established types. Do not duplicate fields unnecessarily.
-
----
-
-# 4. Category Model Requirements
-
-The category model must support the five approved store categories and future Admin management.
-
-Required conceptual structure:
-
-```ts
-Category {
-  id: string;
-
-  name: {
-    ar: string;
-    en: string;
-  };
-
-  slug: string;
-
   image?: ProductImage;
-
-  isActive: boolean;
-
-  sortOrder?: number;
-
-  createdAt: Timestamp | Date;
-  updatedAt: Timestamp | Date;
+  unitPrice: number;
+  quantity: number;
+  selectedVariants?: {
+    size?: string;
+    color?: string;
+    [key: string]: string | undefined;
+  };
+  stock?: number;
 }
 ```
 
-The initial five categories are:
+A unique cart-line identity must account for variants.
+
+Example:
 
 ```text
-1. Clothing
-   الملابس
-
-2. Personal Care
-   العناية والشخصية
-
-3. Home Supplies
-   مستلزمات المنزل
-
-4. Office Tools
-   أدوات المكتب
-
-5. General Accessories
-   إكسسوارات عامة
+productId + selected size + selected color
 ```
 
-Category display labels must come from the localization/data model rather than being hard-coded into the Product Grid.
+Therefore, the same product with two different colors/sizes may exist as separate cart lines.
 
 ---
 
-# 5. Detailed Execution Steps
+## 2.3 Cart Drawer / Modal
 
-# Step 1 — Verify Phase 2 Foundation
+The cart must be accessible globally from the application header.
+
+Responsibilities:
+
+- Open from the cart icon/badge.
+- Display current cart items.
+- Display product thumbnail.
+- Display localized product title.
+- Display selected variants.
+- Display quantity controls.
+- Display remove action.
+- Display line subtotal.
+- Display cart subtotal.
+- Display total item count.
+- Provide CTA to Checkout.
+- Provide CTA to continue shopping where appropriate.
+- Display empty-cart state.
+- Work correctly in both LTR and RTL.
+- Work correctly in Light and Dark themes.
+- Work correctly on mobile and desktop.
+
+The drawer must not duplicate cart business logic.
+
+All calculations and mutations must come from the centralized cart state layer.
+
+---
+
+## 2.4 Checkout Flow
+
+Checkout route should follow the project's established routing convention, for example:
+
+```text
+/checkout
+```
+
+The checkout page must include:
+
+### Shipping Details
+
+Minimum conceptual fields:
+
+```text
+fullName
+phone
+email
+address
+city
+country
+postalCode
+additionalNotes?
+```
+
+Exact required fields should follow the approved project UX and localization requirements.
+
+Requirements:
+
+- Form validation.
+- Clear validation messages.
+- AR/EN labels and messages.
+- RTL/LTR support.
+- Preserve entered values during normal UI state changes.
+- Prevent checkout with an empty cart.
+- Prevent order submission while already processing.
+
+### Order Summary
+
+Display:
+
+- Cart items.
+- Selected variants.
+- Quantities.
+- Unit prices.
+- Item subtotals.
+- Cart subtotal.
+- Shipping amount if the project currently defines one.
+- Discount amount if a future-compatible field is needed.
+- Grand total.
+
+**Important:** Coupon business logic is not part of this phase unless already required by the existing approved implementation. Phase 4 should not expand into the complete coupon system.
+
+---
+
+## 2.5 Order Processing & Firestore Integration
+
+After successful checkout validation, create an order document in:
+
+```text
+orders
+```
+
+Conceptual order structure:
+
+```ts
+Order {
+  id: string;
+  userId?: string | null;
+
+  items: OrderItem[];
+
+  shipping: {
+    fullName: string;
+    phone: string;
+    email: string;
+    address: string;
+    city: string;
+    country: string;
+    postalCode: string;
+    additionalNotes?: string;
+  };
+
+  subtotal: number;
+  shippingCost: number;
+  discount?: number;
+  total: number;
+
+  status: "pending";
+
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+```
+
+`OrderItem` should preserve the purchasing snapshot:
+
+```ts
+OrderItem {
+  productId: string;
+  title: {
+    ar: string;
+    en: string;
+  };
+  image?: ProductImage;
+  unitPrice: number;
+  quantity: number;
+  selectedVariants?: Record<string, string>;
+}
+```
+
+### Important Data Principle
+
+Orders should preserve the product/price/variant information used at checkout.
+
+The order must not depend on future product changes to render its historical contents.
+
+---
+
+## 2.6 Cart Clearing Rule
+
+The cart must be cleared **only after successful order creation**.
+
+Expected sequence:
+
+```text
+Validate Checkout
+      ↓
+Build Order Payload
+      ↓
+Create Firestore Order
+      ↓
+Confirm Success
+      ↓
+Clear Cart
+      ↓
+Navigate to Success/Order Confirmation
+```
+
+If order creation fails:
+
+```text
+Do NOT clear cart
+```
+
+The user must be able to retry without losing their cart.
+
+---
+
+# 3. File Boundaries
+
+## 3.1 Allowed New Files
+
+### Product Details
+
+```text
+src/components/product/
+  ProductGallery.tsx
+  ProductInfo.tsx
+  ProductVariants.tsx
+  ProductStockStatus.tsx
+  ProductQuantitySelector.tsx
+  AddToCartButton.tsx
+```
+
+### Cart
+
+```text
+src/components/cart/
+  CartDrawer.tsx
+  CartItem.tsx
+  CartSummary.tsx
+  CartEmptyState.tsx
+  CartQuantityControl.tsx
+```
+
+### Checkout
+
+```text
+src/components/checkout/
+  ShippingForm.tsx
+  OrderSummary.tsx
+  CheckoutItem.tsx
+  CheckoutSubmit.tsx
+  OrderSuccess.tsx
+```
+
+### State
+
+```text
+src/context/CartContext.tsx
+```
+
+or, if Zustand is selected:
+
+```text
+src/store/cartStore.ts
+```
+
+Additional cart selectors/helpers may be created where necessary.
+
+### Hooks
+
+```text
+src/hooks/useCart.ts
+src/hooks/useProduct.ts
+```
+
+Additional hooks may be created only when they represent a real reusable responsibility.
+
+### Services / Repositories
+
+```text
+src/repositories/orderRepository.ts
+src/services/orderService.ts
+```
+
+Product repository/service files from Phase 3 may be reused.
+
+### Mappers
+
+```text
+src/mappers/orderMapper.ts
+```
+
+### Types
+
+```text
+src/types/cart.ts
+src/types/order.ts
+src/types/checkout.ts
+```
+
+### Pages
+
+```text
+src/pages/storefront/ProductDetails.tsx
+src/pages/storefront/Checkout.tsx
+```
+
+An order confirmation page may also be added if required by the approved UX:
+
+```text
+src/pages/storefront/OrderSuccess.tsx
+```
+
+---
+
+## 3.2 Allowed Modifications
+
+Phase 4 may modify existing:
+
+```text
+src/components/
+src/context/
+src/hooks/
+src/pages/
+src/repositories/
+src/services/
+src/mappers/
+src/store/
+src/types/
+src/utils/
+src/routes/
+src/i18n/
+src/constants/
+src/index.css
+```
+
+Existing Header/Navigation components may be modified only to:
+
+- Connect the cart badge.
+- Open the Cart Drawer.
+- Reflect cart item count.
+
+Phase 4 must not redesign the global navigation.
+
+---
+
+## 3.3 Restricted / Out of Scope
+
+Do not implement or expand:
+
+```text
+Admin Dashboard
+Product CRUD
+Category CRUD
+Coupon Management
+Advanced Coupon Engine
+Order Management Dashboard
+Order Tracking System
+User Account/Order History
+Real Payment Gateway
+Payment Provider Integration
+Inventory Management System
+Shipping Provider Integration
+```
+
+The admin order-management layer belongs to a later phase.
+
+---
+
+# 4. Architecture & Data Flow
+
+## 4.1 Product Details
+
+```text
+Route /product/:id
+        ↓
+useProduct()
+        ↓
+productService
+        ↓
+productRepository
+        ↓
+Firestore
+        ↓
+Product Mapper
+        ↓
+Product Details UI
+        ↓
+Variant Selection
+        ↓
+Cart State
+```
+
+---
+
+## 4.2 Cart
+
+```text
+Product Details / Catalog
+          ↓
+       useCart()
+          ↓
+    Cart State Layer
+          ↓
+ ┌────────┴─────────┐
+ ↓                  ↓
+LocalStorage     Auth Sync
+Guest Cart       Registered User
+```
+
+The UI must never implement independent cart state.
+
+---
+
+## 4.3 Checkout
+
+```text
+Cart State
+    ↓
+Checkout Page
+    ↓
+Shipping Validation
+    ↓
+Order Payload
+    ↓
+orderService
+    ↓
+orderRepository
+    ↓
+Firestore /orders
+    ↓
+Success
+    ↓
+Clear Cart
+```
+
+---
+
+# 5. Step-by-Step Execution Steps
+
+## Step 1 — Review Phase 3 Output
 
 Before implementation:
 
-- Confirm Phase 2 is `[PASS]`.
-- Confirm Auth Context works.
-- Confirm routing works.
-- Confirm AR/EN switching works.
-- Confirm RTL/LTR works.
-- Confirm Light/Dark themes work.
-- Confirm shared Header/Footer work.
-- Confirm Firebase configuration is centralized.
+- Verify Phase 3 `[PASS]`.
+- Inspect existing Product and Category models.
+- Reuse existing Product Repository/Service/Mappers.
+- Reuse Cloudinary image model and optimized image component.
+- Verify existing routing structure.
+- Verify existing i18n and theme architecture.
+- Verify existing Firebase configuration.
 
-Do not restructure Phase 2 unless a blocking dependency is discovered.
-
----
-
-# Step 2 — Review Existing Firebase Data Contracts
-
-Inspect the existing Firestore configuration and determine:
-
-- Product collection name.
-- Category collection name.
-- Timestamp conventions.
-- Document ID conventions.
-- Existing data shape.
-- Existing indexes.
-- Existing Security Rules.
-
-If no product/category schema exists yet, establish the Phase 3 schema according to the models above.
-
-Do not silently introduce incompatible duplicate schemas.
+**Do not duplicate existing Phase 3 infrastructure.**
 
 ---
 
-# Step 3 — Establish Product Repository
+## Step 2 — Define Product Details Data Contract
 
-Create a repository responsible exclusively for product data access.
+Confirm the final Product model supports:
 
-Required operations for this phase:
+- Localized title.
+- Localized description.
+- Category.
+- Price.
+- Compare-at price.
+- Images.
+- Variants.
+- Stock.
+- Active state.
+
+Define any missing optional fields without breaking existing products.
+
+---
+
+## Step 3 — Implement Single Product Retrieval
+
+Create/reuse:
 
 ```text
-getProducts()
-getProductsByCategory()
-getProductPage()
+useProduct()
+productService.getById()
+productRepository.getById()
 ```
 
-Where appropriate, support query parameters for:
+Requirements:
+
+- Retrieve by route ID.
+- Map Firestore document into the application Product model.
+- Handle missing product.
+- Handle inactive/unavailable product appropriately.
+- Handle loading/error states.
+
+---
+
+## Step 4 — Build Product Details Layout
+
+Create the Modern Minimalist Product Details page.
+
+Desktop:
 
 ```text
-category
-price range
-sort
-page/cursor
-limit
+┌────────────────────┬────────────────────────────┐
+│                    │ Product Information        │
+│   Image Gallery    │ Title                      │
+│                    │ Price                      │
+│                    │ Stock                      │
+│                    │ Variants                   │
+│                    │ Quantity                   │
+│                    │ Add to Cart                │
+└────────────────────┴────────────────────────────┘
 ```
 
-The repository must not know about React components or UI state.
+Mobile layout should naturally collapse into a single-column experience.
 
 ---
 
-# Step 4 — Establish Category Repository
+## Step 5 — Implement Cloudinary Product Gallery
 
-Create the category repository.
+Use the Cloudinary image references already established in Phase 3.
 
-Required responsibilities:
+Support:
 
-- Fetch active categories.
-- Fetch categories required by catalog filters.
-- Map Firestore category documents.
-- Handle missing/invalid documents safely.
+- Optimized primary image.
+- Thumbnail navigation.
+- Responsive dimensions.
+- Lazy loading where appropriate.
+- Proper aspect-ratio handling.
+- Fallback image/error state.
+- Accessible alt text.
+- RTL-compatible navigation controls.
 
-The repository must not contain UI rendering logic.
+Do not store or transmit binary image data through Firestore.
 
 ---
 
-# Step 5 — Implement Data Mappers
+## Step 6 — Implement Variant Selection
 
-Create explicit transformation boundaries:
+Support available product variants.
+
+Examples:
 
 ```text
-Firestore Product
-        ↓
-productMapper
-        ↓
-Application Product
+Size:
+[ S ] [ M ] [ L ] [ XL ]
+
+Color:
+[ Black ] [ White ] [ Beige ]
+```
+
+Requirements:
+
+- Clear selected state.
+- Accessible controls.
+- Required variant validation.
+- Variant-aware cart identity.
+- Prevent invalid combinations where product data defines availability.
+- Preserve selected variant when adding to cart.
+
+---
+
+## Step 7 — Implement Stock Handling
+
+Display appropriate states:
+
+```text
+In Stock
+Low Stock
+Out of Stock
+Unavailable
+```
+
+Exact thresholds should be centralized rather than hard-coded throughout components.
+
+When stock is unavailable:
+
+- Disable Add to Cart.
+- Explain availability state.
+- Do not allow invalid quantities.
+
+---
+
+## Step 8 — Design Cart State Contract
+
+Implement centralized cart actions such as:
+
+```ts
+addItem();
+removeItem();
+updateQuantity();
+incrementItem();
+decrementItem();
+clearCart();
+getItemQuantity();
+getSubtotal();
+getTotalItems();
+```
+
+The API should remain independent of the UI.
+
+---
+
+## Step 9 — Implement LocalStorage Persistence
+
+For guest users:
+
+```text
+Cart State
+   ↓
+serialize
+   ↓
+localStorage
+```
+
+On application initialization:
+
+```text
+localStorage
+   ↓
+validate/parse
+   ↓
+Cart State
+```
+
+Requirements:
+
+- Handle malformed localStorage safely.
+- Avoid runtime crashes.
+- Avoid storing unnecessary application state.
+- Keep persisted structure versionable where practical.
+
+---
+
+## Step 10 — Implement Authenticated Cart Synchronization
+
+For authenticated users, establish the approved synchronization strategy.
+
+Minimum requirements:
+
+- Detect authentication state changes.
+- Prevent accidental cart loss during login/logout.
+- Merge guest cart with authenticated cart according to defined business rules.
+- Avoid duplicate cart lines when the same product/variant exists.
+- Keep synchronization deterministic.
+
+If Firestore-backed cart persistence is used, introduce the required repository/service boundary rather than writing Firestore calls directly inside React components.
+
+---
+
+## Step 11 — Integrate Add-to-Cart
+
+Connect:
+
+```text
+Product Details
+      ↓
+Variant Validation
+      ↓
+Stock Validation
+      ↓
+addItem()
+      ↓
+Cart State
+      ↓
+Cart Badge Update
+```
+
+After successful addition:
+
+- Update cart count immediately.
+- Provide clear user feedback.
+- Optionally open Cart Drawer according to the approved UX.
+
+---
+
+## Step 12 — Build Global Cart Drawer
+
+Integrate Cart Drawer with the existing Header.
+
+Requirements:
+
+- Global accessibility.
+- No duplicated cart state.
+- Item list.
+- Quantity controls.
+- Remove action.
+- Subtotal.
+- Checkout CTA.
+- Empty state.
+- Responsive behavior.
+- AR/EN.
+- RTL/LTR.
+- Light/Dark.
+
+---
+
+## Step 13 — Build Checkout Route
+
+Create:
+
+```text
+/checkout
+```
+
+Behavior:
+
+- If cart is empty, do not allow normal checkout submission.
+- Display checkout layout.
+- Display Shipping Details form.
+- Display Order Summary.
+- Preserve cart state while completing the form.
+
+---
+
+## Step 14 — Implement Shipping Validation
+
+Implement typed form state and validation.
+
+Validate:
+
+- Required fields.
+- Valid email where applicable.
+- Valid phone format according to project requirements.
+- Required address/location fields.
+- Reasonable field lengths.
+
+Validation messages must be localized.
+
+---
+
+## Step 15 — Build Order Summary
+
+The summary must be derived from the centralized cart state.
+
+Show:
+
+```text
+Products
+Variants
+Quantities
+Subtotal
+Shipping
+Discount (if applicable)
+Total
+```
+
+All monetary calculations should use a single centralized utility.
+
+Avoid duplicated arithmetic across Product, Cart, and Checkout components.
+
+---
+
+## Step 16 — Define Order Repository & Service
+
+Create:
+
+```text
+orderRepository.create()
+orderService.createOrder()
+```
+
+Responsibilities:
+
+### Service
+
+- Validate/normalize order input.
+- Construct order payload.
+- Add timestamps.
+- Apply business-level defaults.
+
+### Repository
+
+- Perform Firestore write.
+- Remain isolated from UI components.
+
+UI must not call Firestore directly.
+
+---
+
+## Step 17 — Create Firestore Order Document
+
+On successful checkout:
+
+```text
+orders/{orderId}
+```
+
+Persist:
+
+- User ID when authenticated.
+- Guest order indicator/reference when supported.
+- Order items.
+- Product snapshots.
+- Selected variants.
+- Quantities.
+- Prices.
+- Shipping details.
+- Subtotal.
+- Shipping cost.
+- Discount if supported by the current phase.
+- Total.
+- Status.
+- Created/updated timestamps.
+
+---
+
+## Step 18 — Implement Order Submission State
+
+The checkout submit flow must support:
+
+```text
+idle
+→ submitting
+→ success
 ```
 
 and:
 
 ```text
-Firestore Category
-        ↓
-categoryMapper
-        ↓
-Application Category
+idle
+→ submitting
+→ error
 ```
 
-Mappers should:
+During submission:
 
-- Normalize timestamps.
-- Validate required fields.
-- Apply safe defaults where appropriate.
-- Normalize image objects.
-- Preserve AR/EN content.
-- Prevent UI code from depending on raw Firestore document structure.
+- Disable duplicate submission.
+- Show progress/loading state.
+- Preserve cart if the operation fails.
+- Display localized error feedback.
 
 ---
 
-# Step 6 — Implement Product Service
+## Step 19 — Clear Cart After Successful Order
 
-The service layer coordinates repository calls and business-neutral catalog logic.
-
-Responsibilities may include:
-
-- Building catalog queries.
-- Normalizing filters.
-- Normalizing sort options.
-- Validating price ranges.
-- Coordinating pagination.
-- Returning typed results.
-
-Avoid putting presentation-specific logic in the service.
-
----
-
-# Step 7 — Implement Cloudinary Configuration
-
-Create a centralized Cloudinary configuration layer.
-
-Required configuration should use environment variables.
-
-Conceptual values:
-
-```text
-VITE_CLOUDINARY_CLOUD_NAME
-VITE_CLOUDINARY_UPLOAD_PRESET
-```
-
-Do not expose private Cloudinary credentials in the frontend.
-
-If an unsigned upload preset is used, configure Cloudinary restrictions appropriately.
-
----
-
-# Step 8 — Implement Cloudinary Upload Service
-
-Create a reusable image upload boundary.
-
-Expected flow:
-
-```text
-File
- ↓
-Validation
- ↓
-Cloudinary Upload
- ↓
-Upload Result
- ↓
-Optimized URL / public ID
-```
-
-Validate at minimum:
-
-- File type.
-- File size.
-- Upload response.
-- Missing URL.
-- Upload failure.
-
-The service must return typed results rather than exposing raw HTTP responses to components.
-
----
-
-# Step 9 — Implement Image Optimization
-
-Create a utility for generating optimized Cloudinary URLs.
-
-Support concepts such as:
-
-```text
-Width
-Height
-Crop
-Quality
-Format
-```
-
-Example conceptual transformations:
-
-```text
-Product Card
-→ constrained width
-→ automatic format
-→ automatic quality
-→ crop/fill where appropriate
-```
-
-```text
-Product Listing
-→ responsive dimensions
-→ optimized delivery
-```
-
-Do not deliver unnecessarily large original images to small product cards.
-
----
-
-# Step 10 — Create `OptimizedImage`
-
-Create a reusable image component responsible for:
-
-- Cloudinary URL transformation.
-- Responsive sizing.
-- Lazy loading where appropriate.
-- Aspect ratio.
-- Object-fit behavior.
-- Alt text.
-- Loading state.
-- Error/fallback state.
-
-The component must remain reusable outside the catalog.
-
----
-
-# Step 11 — Define Catalog Filter State
-
-Create a typed catalog filter model.
-
-Conceptual structure:
+Only after Firestore confirms successful order creation:
 
 ```ts
-CatalogFilters {
-  categoryId?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  sort: CatalogSort;
-}
+await createOrder(...)
+clearCart()
+navigateToSuccess(...)
 ```
 
-Sort values:
-
-```text
-newest
-price-asc
-price-desc
-```
-
-Do not represent filters through arbitrary untyped strings.
-
----
-
-# Step 12 — Implement Category Filtering
-
-Provide a category filter capable of:
-
-```text
-All Products
-Clothing
-Personal Care
-Home Supplies
-Office Tools
-General Accessories
-```
-
-Requirements:
-
-- AR/EN labels.
-- Correct category IDs.
-- Active filter state.
-- Reset option.
-- Mobile-friendly controls.
-- URL/query-state synchronization if supported by the existing routing architecture.
-
----
-
-# Step 13 — Implement Price Filtering
-
-Support:
-
-```text
-Minimum Price
-Maximum Price
-```
-
-Requirements:
-
-- Numeric validation.
-- Prevent negative values.
-- Prevent invalid ranges.
-- Clear filter action.
-- Responsive controls.
-- Correct result updates.
-
-If the product dataset uses a single currency, do not introduce currency-conversion logic in this phase.
-
----
-
-# Step 14 — Implement Sorting
-
-Required sorting:
-
-```text
-Newest
-Price: Low → High
-Price: High → Low
-```
-
-The sorting mechanism must be consistent between:
-
-- Desktop.
-- Mobile.
-- Pagination/infinite-scroll states.
-
-Do not sort only the currently visible page when the intended behavior requires server-side/query-level sorting.
-
----
-
-# Step 15 — Implement Catalog Hook
-
-Create:
-
-```text
-useProducts()
-```
-
-and, where appropriate:
-
-```text
-useCategories()
-useCatalogFilters()
-```
-
-The hook/state layer should expose:
-
-```text
-products
-loading
-error
-hasMore
-filters
-sort
-setFilters
-setSort
-loadMore
-refresh
-```
-
-The exact API may differ, but UI components should not need direct repository access.
-
----
-
-# Step 16 — Build Product Card
-
-Create a reusable Neutral Minimalist Product Card.
-
-Required display:
-
-- Product image.
-- Product name.
-- Localized title.
-- Current price.
-- Compare-at/original price when applicable.
-- Discount indication when available.
-- Category where appropriate.
-- Availability indication when available.
-
-The card should support future navigation to:
-
-```text
-/product/:productId
-```
-
-without implementing the complete Product Details page in Phase 3.
-
----
-
-# Step 17 — Build Product Grid
-
-Create the catalog grid.
-
-Responsive target:
-
-```text
-Mobile
-→ 2 columns where appropriate
-
-Tablet
-→ 2–3 columns
-
-Desktop
-→ 3–4 columns
-```
-
-The exact number may follow the approved design.
-
-The grid must maintain:
-
-- Consistent card dimensions.
-- Consistent spacing.
-- Image aspect ratio.
-- Responsive behavior.
-- RTL/LTR compatibility.
-
----
-
-# Step 18 — Build Catalog Toolbar
-
-Implement:
-
-```text
-Result Count
-Filter Trigger
-Sort Selector
-```
-
-Desktop may display filters alongside the grid.
-
-Mobile should provide a compact filter/sort interaction.
-
-Avoid overcrowding the toolbar.
-
----
-
-# Step 19 — Build Filter UI
-
-Desktop:
-
-```text
-Sidebar / Filter Panel
-```
-
-Mobile:
-
-```text
-Sheet / Drawer
-```
-
-Both must use the same filter state.
-
-Required filters:
-
-```text
-Category
-Price Range
-```
-
-Required sorting:
-
-```text
-Newest
-Lowest Price
-Highest Price
-```
-
----
-
-# Step 20 — Implement Pagination or Infinite Scroll
-
-Support efficient product browsing.
-
-The implementation may use either:
-
-```text
-Pagination
-```
-
-or:
-
-```text
-Infinite Scroll
-```
-
-based on the existing application architecture and dataset characteristics.
-
-### Pagination Requirements
-
-- Page size is controlled.
-- Current page is tracked.
-- Navigation state is clear.
-- Filters reset pagination.
-- Sorting resets pagination.
-
-### Infinite Scroll Requirements
-
-- Cursor-based loading where supported.
-- Duplicate requests prevented.
-- Loading indicator.
-- `hasMore` handling.
-- End-of-results state.
-- Filters reset the loaded result set.
-- Sorting resets the loaded result set.
-
-Avoid loading the entire product collection into the browser.
-
----
-
-# Step 21 — Handle Catalog States
-
-Implement reusable states for:
-
-### Initial Loading
-
-Show product skeletons.
-
-### Loading More
-
-Show a smaller loading indicator without destroying existing products.
-
-### Empty Results
-
-Display a clear message such as:
-
-```text
-No products found.
-```
-
-and provide:
-
-```text
-Clear Filters
-```
-
-when filters caused the empty state.
-
-### Error
-
-Display a recoverable error state with:
-
-```text
-Try Again
-```
-
-where appropriate.
-
----
-
-# Step 22 — Implement Localization
-
-Every user-facing catalog string must support:
-
-```text
-AR
-EN
-```
-
-Product titles and category names must select the active locale.
-
-Conceptual:
+Never:
 
 ```ts
-product.title[locale];
+clearCart()
+await createOrder(...)
 ```
 
-Fallback behavior must be defined if a translation is missing.
-
-Do not display:
-
-```text
-undefined
-null
-[object Object]
-```
-
-to users.
+This prevents cart loss when the order write fails.
 
 ---
 
-# Step 23 — RTL/LTR Validation
+## Step 20 — Build Order Success State
+
+After successful order creation, display:
+
+- Success confirmation.
+- Order ID/reference.
+- Order total.
+- Basic next-step information.
+- Continue Shopping CTA.
+
+A future Order Tracking/Account system may consume this order later, but must not be implemented as part of this phase.
+
+---
+
+## Step 21 — Security & Firestore Rules Review
+
+Review Firestore access patterns for the new `orders` collection.
+
+Minimum principle:
+
+- Clients should not gain unrestricted access to all orders.
+- Users should only be able to create/read records permitted by the approved security model.
+- Admin access must remain separately controlled.
+- Client-side authorization is not a security boundary.
+
+Any required Firestore Rules changes must be reviewed before being considered complete.
+
+---
+
+## Step 22 — Localization & Theme Verification
+
+Verify every new UI state in:
+
+### Arabic
+
+```text
+AR + RTL + Light
+AR + RTL + Dark
+```
+
+### English
+
+```text
+EN + LTR + Light
+EN + LTR + Dark
+```
 
 Verify:
 
-```text
-AR → RTL
-EN → LTR
-```
-
-Check:
-
-- Product card text.
-- Filter sidebar.
-- Filter controls.
-- Sort controls.
-- Price fields.
-- Toolbar.
-- Pagination.
-- Drawer positioning.
-- Icons.
-- Badges.
-- Product grid alignment.
-
-Avoid directional assumptions in CSS.
+- Product information.
+- Variant labels.
+- Cart labels.
+- Checkout form.
+- Validation messages.
+- Order confirmation.
+- Error messages.
+- Empty states.
+- Buttons.
+- Drawer direction.
 
 ---
 
-# Step 24 — Theme Validation
-
-Verify the catalog in:
-
-```text
-Light Mode
-Dark Mode
-```
-
-Use the established palette and tokens.
-
-The catalog must retain the intended Neutral Minimalist appearance:
-
-```text
-#FFFFFF
-#F8FAFC
-#0F172A
-#000000
-```
-
-Avoid introducing unrelated colors unless required for semantic states such as errors or success.
-
----
-
-# Step 25 — Responsive Validation
+## Step 23 — Responsive Verification
 
 Test at minimum:
 
@@ -1041,650 +1023,387 @@ Tablet
 Desktop
 ```
 
-Validate:
-
-- Product grid.
-- Filter controls.
-- Sort controls.
-- Product image dimensions.
-- Text wrapping.
-- Toolbar.
-- Pagination/infinite scrolling.
-- Empty state.
-- Error state.
-- RTL/LTR.
-
-There must be no unintended horizontal scrolling.
-
----
-
-# Step 26 — Performance Pass
-
 Verify:
 
-- Product images are optimized.
-- Images are lazy-loaded where appropriate.
-- Firestore queries are limited.
-- Pagination/cursors are used.
-- Duplicate queries are avoided.
-- Filter changes do not trigger unnecessary requests.
-- Sorting does not reload unrelated application state.
-- Existing products remain visible while loading additional pages.
-- Large original Cloudinary assets are not unnecessarily delivered.
+- Product gallery.
+- Variant controls.
+- Cart Drawer.
+- Checkout form.
+- Order summary.
+- Long product titles.
+- Large/small images.
+- RTL layouts.
 
 ---
 
-# Step 27 — Security Review
-
-Verify:
-
-- Firestore reads follow the intended access model.
-- Product data cannot be modified through catalog APIs by unauthorized users.
-- Cloudinary upload configuration does not expose private credentials.
-- Product image URLs are treated as data, not executable content.
-- Client-side filters are not considered security controls.
-
-Admin mutation security remains part of later Admin implementation.
-
----
-
-# Step 28 — Automated Validation
+## Step 24 — Regression & Quality Checks
 
 Run:
 
 ```text
-npm run lint
-npm run typecheck
-npm run build
+Lint
+Typecheck
+Build
 ```
 
-Use equivalent project commands if different.
+Then test the full purchasing journey:
 
-Resolve all blocking errors before requesting Phase 3 review.
+```text
+Catalog
+  ↓
+Product Details
+  ↓
+Select Variant
+  ↓
+Add to Cart
+  ↓
+Cart Drawer
+  ↓
+Checkout
+  ↓
+Shipping Details
+  ↓
+Order Summary
+  ↓
+Create Order
+  ↓
+Clear Cart
+  ↓
+Success
+```
 
 ---
 
 # 6. Definition of Done (DoD)
 
-Phase 3 may be marked `[PASS]` only when all applicable requirements below are satisfied.
+Phase 4 is considered complete only when all applicable items below are `[PASS]`.
 
-## Cloudinary
+## Product Details
 
-- [ ] Cloudinary configuration is centralized.
-- [ ] Required environment variables are configured.
-- [ ] Product image upload service exists.
-- [ ] Upload validation exists.
-- [ ] Upload errors are handled.
-- [ ] Optimized Cloudinary URL generation exists.
-- [ ] Image resizing is supported.
-- [ ] Image quality/format optimization is supported.
-- [ ] `OptimizedImage` or equivalent reusable abstraction exists.
-- [ ] Original unnecessarily large images are not used by default for product cards.
+- [ ] `/product/:id` route is implemented.
+- [ ] Product loads from the existing Firestore product data layer.
+- [ ] Product title and description support AR/EN.
+- [ ] Price and compare-at price display correctly.
+- [ ] Cloudinary gallery works correctly.
+- [ ] Optimized/responsive images are used.
+- [ ] Image fallback/error states work.
+- [ ] Product variants can be selected.
+- [ ] Required variant validation works.
+- [ ] Stock state is displayed.
+- [ ] Out-of-stock products cannot be added.
+- [ ] Quantity cannot exceed valid stock.
+- [ ] Add to Cart works from Product Details.
 
----
+## Cart State
 
-## Product Data
+- [ ] Centralized cart state is implemented.
+- [ ] Add item works.
+- [ ] Variant-aware cart lines work.
+- [ ] Quantity increase works.
+- [ ] Quantity decrease works.
+- [ ] Quantity validation works.
+- [ ] Item removal works.
+- [ ] Clear cart works.
+- [ ] Total item count is correct.
+- [ ] Subtotal calculation is correct.
+- [ ] Guest cart persists through LocalStorage.
+- [ ] Cart restores correctly after refresh.
+- [ ] Authenticated-user synchronization follows the approved strategy.
+- [ ] Login/logout does not unexpectedly destroy cart data.
 
-- [ ] Product TypeScript model exists.
-- [ ] Category TypeScript model exists.
-- [ ] Product repository exists.
-- [ ] Category repository exists.
-- [ ] Product service exists.
-- [ ] Category service exists where required.
-- [ ] Product mapper exists.
-- [ ] Category mapper exists.
-- [ ] Raw Firestore structures are not leaked into presentation components.
-- [ ] Product queries are typed.
-- [ ] Category queries are typed.
+## Cart Drawer
 
----
+- [ ] Cart Drawer is accessible from the global header.
+- [ ] Cart badge reflects current quantity.
+- [ ] Items display correctly.
+- [ ] Selected variants display correctly.
+- [ ] Quantity controls work.
+- [ ] Remove action works.
+- [ ] Subtotal is correct.
+- [ ] Empty-cart state works.
+- [ ] Checkout CTA works.
+- [ ] Responsive behavior works.
+- [ ] RTL/LTR behavior works.
+- [ ] Light/Dark themes work.
 
-## Product Catalog
+## Checkout
 
-- [ ] Catalog page exists.
-- [ ] Products load from Firestore.
-- [ ] Product Grid exists.
-- [ ] Product Card exists.
-- [ ] Product images render through optimized delivery.
-- [ ] Product title is localized.
-- [ ] Product pricing renders correctly.
-- [ ] Discount/original price renders when available.
-- [ ] Product card supports future product-detail navigation.
-- [ ] Responsive grid works.
+- [ ] `/checkout` route is implemented.
+- [ ] Empty carts cannot complete checkout.
+- [ ] Shipping Details form is implemented.
+- [ ] Required validation works.
+- [ ] Validation messages are localized.
+- [ ] Order Summary reflects cart state.
+- [ ] Product variants appear in the summary.
+- [ ] Quantity and pricing calculations are correct.
+- [ ] Shipping amount is handled consistently.
+- [ ] Duplicate order submission is prevented.
+- [ ] Loading/submitting state works.
+- [ ] Failure state preserves the cart.
 
----
+## Firestore Orders
 
-## Filtering
+- [ ] `orders` collection integration is implemented.
+- [ ] Order repository/service boundary exists.
+- [ ] UI does not directly write to Firestore.
+- [ ] Order items contain purchasing snapshots.
+- [ ] Selected variants are persisted.
+- [ ] Shipping details are persisted.
+- [ ] Totals are persisted.
+- [ ] Order status is initialized correctly.
+- [ ] Timestamps are persisted.
+- [ ] Authenticated user association works where applicable.
+- [ ] Firestore security rules are reviewed.
+- [ ] Order creation succeeds with valid checkout data.
+- [ ] Order failure does not clear the cart.
+- [ ] Cart clears only after confirmed order creation.
+- [ ] Order success state is displayed.
 
-- [ ] Category filter works.
-- [ ] Price minimum works.
-- [ ] Price maximum works.
-- [ ] Invalid price ranges are rejected/normalized.
-- [ ] Filters can be cleared.
-- [ ] Filter state is typed.
-- [ ] Mobile filter UI works.
-- [ ] Desktop filter UI works.
-- [ ] Changing filters resets pagination/infinite-scroll state correctly.
+## UX / Design
 
----
-
-## Sorting
-
-- [ ] Newest sorting works.
-- [ ] Lowest-price sorting works.
-- [ ] Highest-price sorting works.
-- [ ] Sorting is applied consistently to loaded results.
-- [ ] Sorting resets pagination/infinite-scroll state correctly.
-- [ ] Sorting works in AR/EN.
-- [ ] Sorting works in RTL/LTR.
-
----
-
-## Pagination / Infinite Scroll
-
-- [ ] Product results are not loaded entirely at once.
-- [ ] Page size/limit is controlled.
-- [ ] Pagination or cursor mechanism works.
-- [ ] Duplicate requests are prevented.
-- [ ] Loading-more state exists.
-- [ ] End-of-results state exists.
-- [ ] Filters reset result pagination correctly.
-- [ ] Sorting resets result pagination correctly.
-
----
-
-## Localization & Direction
-
-- [ ] AR catalog UI works.
-- [ ] EN catalog UI works.
-- [ ] Arabic product titles render correctly.
-- [ ] English product titles render correctly.
-- [ ] Category names are localized.
-- [ ] RTL layout works.
-- [ ] LTR layout works.
-- [ ] No hard-coded directional assumptions remain in catalog components.
-
----
-
-## Theme
-
-- [ ] Light Mode works.
-- [ ] Dark Mode works.
-- [ ] Product cards are theme-compatible.
-- [ ] Filters are theme-compatible.
-- [ ] Catalog toolbar is theme-compatible.
-- [ ] Empty/loading/error states are theme-compatible.
-- [ ] Neutral Minimalist visual language is preserved.
-
----
-
-## Quality
-
+- [ ] Modern Minimalist visual language is preserved.
+- [ ] Neutral palette is preserved.
+- [ ] AR/EN toggle works.
+- [ ] RTL/LTR layouts are correct.
+- [ ] Light/Dark themes are correct.
+- [ ] Mobile layout works.
+- [ ] Tablet layout works.
+- [ ] Desktop layout works.
 - [ ] Loading states exist.
 - [ ] Empty states exist.
 - [ ] Error states exist.
-- [ ] Retry behavior exists where appropriate.
-- [ ] Accessibility labels exist for interactive controls.
-- [ ] Keyboard navigation works.
-- [ ] No horizontal overflow exists.
-- [ ] No unnecessary Phase 4/5 business logic was introduced.
+- [ ] Accessibility basics are covered for interactive controls.
+
+## Engineering Quality
+
+- [ ] TypeScript typecheck passes.
 - [ ] Lint passes.
-- [ ] Typecheck passes.
 - [ ] Production build passes.
+- [ ] No direct Firestore access from presentation components.
+- [ ] No duplicated cart business logic.
+- [ ] No unnecessary product refetching.
+- [ ] No duplicate order submissions.
+- [ ] No cart loss on failed order creation.
+- [ ] Existing Phase 3 catalog functionality remains intact.
+- [ ] No unrelated Phase 5/admin functionality has been introduced.
 
 ---
 
-# 7. Required Validation Matrix
+# 7. Test Matrix
 
-## Product Data
-
-| Scenario                   | Expected Result           |
-| -------------------------- | ------------------------- |
-| Firestore returns products | Products render           |
-| Empty collection           | Empty state               |
-| Firestore failure          | Error state + retry       |
-| Invalid product document   | Mapper handles safely     |
-| Missing optional image     | Image fallback            |
-| Missing translation        | Defined fallback behavior |
-
----
-
-## Filtering
-
-| Scenario       | Expected Result             |
-| -------------- | --------------------------- |
-| All categories | All active products         |
-| Clothing       | Clothing products only      |
-| Personal Care  | Personal Care products only |
-| Home Supplies  | Home products only          |
-| Office Tools   | Office products only        |
-| Accessories    | Accessories only            |
-| Minimum price  | Products meet minimum       |
-| Maximum price  | Products meet maximum       |
-| Min > Max      | Invalid state prevented     |
-| Clear filters  | Full catalog restored       |
-
----
-
-## Sorting
-
-| Scenario          | Expected Result             |
-| ----------------- | --------------------------- |
-| Newest            | Newest products first       |
-| Low → High        | Lowest price first          |
-| High → Low        | Highest price first         |
-| Filter + Sort     | Both applied correctly      |
-| Sort + Pagination | Ordering remains consistent |
-
----
-
-## Localization
-
-| Scenario    | Expected Result        |
-| ----------- | ---------------------- |
-| AR          | Arabic labels/content  |
-| EN          | English labels/content |
-| AR + Filter | RTL filter UI          |
-| EN + Filter | LTR filter UI          |
-| AR + Sort   | Arabic sort UI         |
-| EN + Sort   | English sort UI        |
-
----
-
-## Responsive
-
-| Device      | Expected Result                  |
-| ----------- | -------------------------------- |
-| Mobile      | Compact toolbar + mobile filters |
-| Tablet      | Responsive grid                  |
-| Desktop     | Full catalog/filter layout       |
-| Mobile RTL  | Correct drawer/direction         |
-| Desktop RTL | Correct sidebar/direction        |
+| Area        | Test                               |
+| ----------- | ---------------------------------- |
+| Product     | Valid product loads                |
+| Product     | Missing product                    |
+| Product     | Inactive product                   |
+| Gallery     | Multiple Cloudinary images         |
+| Gallery     | Single image                       |
+| Gallery     | Broken image fallback              |
+| Variants    | Size selection                     |
+| Variants    | Color selection                    |
+| Variants    | Missing required variant           |
+| Stock       | In stock                           |
+| Stock       | Low stock                          |
+| Stock       | Out of stock                       |
+| Cart        | Add product                        |
+| Cart        | Add same product/variant           |
+| Cart        | Add same product/different variant |
+| Cart        | Increase quantity                  |
+| Cart        | Decrease quantity                  |
+| Cart        | Remove item                        |
+| Cart        | Clear cart                         |
+| Persistence | Refresh with guest cart            |
+| Persistence | Login with existing cart           |
+| Persistence | Logout                             |
+| Drawer      | Open/close                         |
+| Drawer      | Empty cart                         |
+| Drawer      | Checkout navigation                |
+| Checkout    | Valid shipping details             |
+| Checkout    | Invalid required fields            |
+| Checkout    | Empty cart                         |
+| Order       | Successful Firestore write         |
+| Order       | Firestore failure                  |
+| Order       | Duplicate submit                   |
+| Order       | Cart clears after success          |
+| Order       | Cart remains after failure         |
+| Locale      | English/LTR                        |
+| Locale      | Arabic/RTL                         |
+| Theme       | Light                              |
+| Theme       | Dark                               |
+| Responsive  | Mobile                             |
+| Responsive  | Tablet                             |
+| Responsive  | Desktop                            |
 
 ---
 
 # 8. Known Risks
 
-## Risk 1 — Firestore Query Limitations
+## 8.1 Cart Persistence Conflicts
 
-### Problem
+Guest and authenticated carts can conflict during login.
 
-Firestore does not behave like a traditional SQL database for arbitrary multi-field filtering and sorting.
-
-Combining category, price, and sorting requirements may require specific query/index strategies.
-
-### Mitigation
-
-- Design queries deliberately.
-- Avoid fetching the complete collection and filtering in React.
-- Add required Firestore indexes.
-- Use query-compatible filter combinations.
-- Document any unavoidable client-side transformation.
+**Mitigation:** define deterministic merge rules before implementing synchronization.
 
 ---
 
-## Risk 2 — Incorrect Pagination
+## 8.2 Variant Identity
 
-### Problem
+Using only `productId` as the cart key can incorrectly merge different variants.
 
-Offset-based pagination can become inefficient or inconsistent when products are inserted/updated.
-
-### Mitigation
-
-Prefer Firestore cursor-based pagination where practical:
-
-```text
-limit()
-startAfter()
-```
-
-Keep the cursor associated with the active query state.
+**Mitigation:** generate a deterministic cart-line key from product ID + selected variants.
 
 ---
 
-## Risk 3 — Inconsistent Sorting Across Pages
+## 8.3 Stale Stock
 
-### Problem
+Product stock can change between catalog browsing and checkout.
 
-Sorting one page locally can result in globally incorrect ordering.
-
-### Mitigation
-
-Perform sorting at the Firestore/query layer whenever the data model and query constraints permit it.
+**Mitigation:** Phase 4 must prevent obvious client-side over-selection, while recognizing that true transactional inventory enforcement may require a trusted backend/server-side mechanism in a future phase.
 
 ---
 
-## Risk 4 — Cloudinary Oversized Images
+## 8.4 Price Integrity
 
-### Problem
+Client-side prices must not be treated as a secure source of truth for financial transactions.
 
-Serving original images directly can increase bandwidth and reduce catalog performance.
-
-### Mitigation
-
-Use Cloudinary transformations for:
-
-- Width.
-- Height.
-- Quality.
-- Format.
-- Responsive sizing.
+**Mitigation:** preserve the architecture so server/trusted backend validation can be introduced before real payment processing.
 
 ---
 
-## Risk 5 — Cloudinary Security
+## 8.5 Order Duplication
 
-### Problem
+Network retries can result in duplicate order creation attempts.
 
-Frontend applications cannot safely contain private Cloudinary API secrets.
-
-### Mitigation
-
-Use only appropriate client-side configuration such as an unsigned upload preset, with strict Cloudinary restrictions.
-
-Private operations should use a trusted backend mechanism if required later.
+**Mitigation:** disable repeated submission and design the order service so future idempotency support can be added cleanly.
 
 ---
 
-## Risk 6 — Data Model Drift
+## 8.6 Firestore Security
 
-### Problem
+Client-side checks are not sufficient for protecting order data.
 
-Firestore documents may evolve independently from TypeScript models.
-
-### Mitigation
-
-Use mappers as the explicit boundary between Firestore and application models.
-
-Do not access arbitrary document properties throughout UI components.
+**Mitigation:** review Firestore Security Rules and keep authorization logic outside presentation components.
 
 ---
 
-## Risk 7 — Translation Fallbacks
+## 8.7 Cart Clearing
 
-### Problem
+Clearing before confirmed order creation can cause irreversible user data loss.
 
-A product may contain an Arabic title but no English title, or vice versa.
-
-### Mitigation
-
-Define deterministic fallback behavior before rendering.
-
-Never allow missing translations to render as raw `undefined`/`null`.
-
----
-
-## Risk 8 — Filter State Complexity
-
-### Problem
-
-Category, price, sorting, pagination, and locale can create race conditions or stale result sets.
-
-### Mitigation
-
-Treat the complete catalog query as a derived state:
-
-```text
-Category
-+
-Price
-+
-Sort
-+
-Pagination Cursor
-=
-Catalog Query
-```
-
-Whenever the query-defining filters change, reset the pagination state.
-
----
-
-## Risk 9 — Duplicate Infinite-Scroll Requests
-
-### Problem
-
-Rapid scrolling can trigger multiple simultaneous requests for the same page/cursor.
-
-### Mitigation
-
-Maintain an explicit loading guard and cursor state.
-
-Do not request another page while the current page is being fetched.
-
----
-
-## Risk 10 — Phase Scope Creep
-
-### Problem
-
-Product Catalog implementation can easily expand into Product Details, Cart, or Admin CRUD.
-
-### Mitigation
-
-Phase 3 ends at:
-
-```text
-Catalog Discovery
-+
-Cloudinary Image Infrastructure
-+
-Filtering
-+
-Sorting
-+
-Pagination / Infinite Scroll
-```
-
-Any deeper product management or purchasing functionality belongs to subsequent phases.
+**Mitigation:** clear the cart only after successful Firestore confirmation.
 
 ---
 
 # 9. Phase Boundary
 
-## Phase 3 WILL include
+## Included in Phase 4
 
 ```text
-Cloudinary
-├── Configuration
-├── Upload Service
-├── Image Optimization
-├── Resizing
-└── Optimized Image Component
-
-Data Layer
-├── Product Repository
-├── Category Repository
-├── Product Service
-├── Category Service
-├── Product Mapper
-└── Category Mapper
-
-Catalog
-├── Catalog Page
-├── Product Grid
-├── Product Card
-├── Category Filter
-├── Price Filter
-├── Sort
-├── Pagination / Infinite Scroll
-├── Loading States
-├── Empty States
-└── Error States
-
-Compatibility
-├── AR / EN
-├── RTL / LTR
-├── Light / Dark
-└── Responsive Mobile / Tablet / Desktop
-```
-
----
-
-## Phase 3 WILL NOT include
-
-```text
-Product Details Implementation
-Cart
+Product Details
+Cloudinary Product Gallery Consumption
+Product Variants
+Stock State
+Add to Cart
+Cart State Management
+LocalStorage Cart Persistence
+Authenticated Cart Synchronization
+Cart Drawer
+Quantity Management
+Cart Removal
 Checkout
-Coupons
-Orders
-Order Tracking
-Account Management
-Admin Dashboard
-Admin Product CRUD
-Admin Category CRUD
-Admin Coupon CRUD
+Shipping Details
+Order Summary
+Firestore Order Creation
+Order Success State
+Cart Clearing After Success
+```
+
+## Explicitly Excluded
+
+```text
 Admin Order Management
+Order Tracking
+Account Order History
+Coupon Engine
+Advanced Inventory Management
 Real Payment Gateway
+Payment Provider Integration
+Shipping Provider API
+Refunds
+Returns
+Advanced Tax Engine
 ```
+
+These features must not be implemented merely because they are adjacent to checkout.
 
 ---
 
-# 10. Performance Acceptance Criteria
+# 10. Exit Criteria
 
-The catalog should follow these principles:
+Phase 4 may be marked:
 
 ```text
-DO:
-- Query only required products.
-- Use pagination/cursors.
-- Optimize images through Cloudinary.
-- Lazy-load appropriate images.
-- Avoid duplicate requests.
-- Cache/reuse category data where appropriate.
-- Keep existing products visible during load-more operations.
-
-DO NOT:
-- Fetch the entire product collection by default.
-- Download original high-resolution images for thumbnails.
-- Filter thousands of products entirely in the browser.
-- Trigger duplicate Firestore requests on every render.
-- Reset the entire page unnecessarily when loading another page.
+[PASS]
 ```
+
+only when:
+
+1. Product Details is fully functional.
+2. Cloudinary gallery is integrated through the existing optimized image architecture.
+3. Variants and stock states work correctly.
+4. Cart state is centralized and persistent.
+5. Cart Drawer works globally.
+6. Checkout validates shipping details.
+7. Order Summary accurately reflects the cart.
+8. Firestore order creation works.
+9. Cart clears only after successful order creation.
+10. Failure states preserve user cart data.
+11. AR/EN + RTL/LTR are verified.
+12. Light/Dark themes are verified.
+13. Mobile/tablet/desktop layouts are verified.
+14. Lint/typecheck/build pass.
+15. Firestore security rules are reviewed.
+16. Phase 3 functionality remains regression-free.
+17. No Phase 5/admin or unrelated functionality has leaked into the implementation.
 
 ---
 
-# 11. Security Acceptance Criteria
+# 11. Handoff to Next Phase
 
-The following principles must remain enforced:
+After `[PASS]`, the project is ready for:
+
+**Phase 5 — Admin Dashboard & Store Management**
+
+The next phase may build on the `orders` collection and existing product/category infrastructure to provide administrative management.
+
+Phase 4 must leave clean service/repository boundaries so that future admin functionality can consume:
 
 ```text
-Firestore
-→ Catalog reads only expose intended product/category data.
-
-Cloudinary
-→ No private API secret is shipped to the browser.
-
-Frontend
-→ Filters and sorting are UX/query mechanisms, not security controls.
-
-Admin mutations
-→ Remain outside Phase 3 and must later be protected independently.
+products
+categories
+orders
+users
 ```
+
+without coupling the Admin UI directly to Firestore implementation details.
 
 ---
 
-# 12. Phase Exit Criteria
-
-Before requesting Phase 3 review, verify:
+## Current Status
 
 ```text
-[PASS] Product Model
-[PASS] Category Model
-[PASS] Product Repository
-[PASS] Category Repository
-[PASS] Product Mapper
-[PASS] Category Mapper
-[PASS] Product Service
-
-[PASS] Cloudinary Configuration
-[PASS] Cloudinary Upload Boundary
-[PASS] Image Optimization
-[PASS] Responsive Image Delivery
-
-[PASS] Product Catalog Page
-[PASS] Product Grid
-[PASS] Product Card
-[PASS] Category Filtering
-[PASS] Price Filtering
-[PASS] Newest Sorting
-[PASS] Low-to-High Sorting
-[PASS] High-to-Low Sorting
-
-[PASS] Pagination / Infinite Scroll
-[PASS] Loading States
-[PASS] Empty States
-[PASS] Error States
-
-[PASS] AR
-[PASS] EN
-[PASS] RTL
-[PASS] LTR
-[PASS] Light Mode
-[PASS] Dark Mode
-[PASS] Mobile
-[PASS] Tablet
-[PASS] Desktop
-
-[PASS] Lint
-[PASS] Typecheck
-[PASS] Production Build
-[PASS] No Scope Leakage
+Phase 1 — Setup & Project Initialization                 [PASS]
+Phase 2 — Authentication & Modern Navigation Layout     [PASS]
+Phase 3 — Product Catalog & Cloudinary Integration       [PASS]
+Phase 4 — Product Details, Cart & Checkout Flow          [PASS]
+Phase 5 — Admin Dashboard & Store Management             [PENDING]
+Phase 6 — QA, Security, Optimization & Production        [PENDING]
 ```
 
----
-
-# 13. Handoff to Phase 4
-
-Once Phase 3 receives `[PASS]`, the project should provide Phase 4 with:
-
-```text
-Firestore-backed Product Catalog
-        +
-Typed Product/Category Models
-        +
-Repository/Data Access Layer
-        +
-Cloudinary Image Infrastructure
-        +
-Optimized Product Images
-        +
-Category Filtering
-        +
-Price Filtering
-        +
-Sorting
-        +
-Efficient Pagination/Infinite Scroll
-        +
-Responsive Product Grid
-        +
-AR/EN
-        +
-RTL/LTR
-        +
-Light/Dark
-```
-
-The next phase can then consume the product model and catalog infrastructure to implement the **Product Details, Cart, Coupons, Checkout, and Order flow** without rebuilding the catalog foundation.
-
----
-
-# Phase 3 Status
-
-```text
-Current Status: IN PROGRESS
-
-Previous Phase:
-Phase 2 — Authentication & Modern Navigation Layout [PASS]
-
-Current Phase:
-Phase 3 — Product Catalog, Cloudinary Integration, & Filtering
-
-Next Phase:
-Phase 4 — Product Details, Cart, Checkout & Orders
-```
+**Phase Owner:** Project Manager / Work Agent
+**Current Phase:** Phase 4 `[PASS]` — approved 2026-09-16
+**Previous Phase:** Phase 3 `[PASS]`
+**Next Phase:** Phase 5
 
 ```
 

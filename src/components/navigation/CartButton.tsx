@@ -12,12 +12,40 @@ import { cn } from "@/lib/utils";
 export function CartButton({
   count,
   className,
+  onClick,
 }: {
   count: number;
   className?: string;
+  onClick?: () => void;
 }) {
   const { t } = useLocale();
 
+  const content = (
+    <>
+      <ShoppingBag className="size-[18px]" aria-hidden="true" />
+      <Badge
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-0.5 end-0"
+      >
+        {count}
+      </Badge>
+      <span className="sr-only">{`${t.nav.cart} — ${count} ${t.nav.cartItems}`}</span>
+    </>
+  );
+  if (onClick)
+    return (
+      <button
+        type="button"
+        aria-label={t.nav.cart}
+        onClick={onClick}
+        className={cn(
+          "relative inline-flex size-10 items-center justify-center rounded-md text-[var(--foreground)] transition-colors hover:bg-[var(--muted)]",
+          className,
+        )}
+      >
+        {content}
+      </button>
+    );
   return (
     <Link
       to="/cart"
@@ -27,14 +55,7 @@ export function CartButton({
         className,
       )}
     >
-      <ShoppingBag className="size-[18px]" aria-hidden="true" />
-      <Badge
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-0.5 end-0"
-      >
-        {count}
-      </Badge>
-      <span className="sr-only">{`${t.nav.cart} — ${count} ${t.nav.cartItems}`}</span>
+      {content}
     </Link>
   );
 }

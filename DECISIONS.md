@@ -137,3 +137,39 @@ the final raw document read.
 - Price sorting continues to use Firestore-compatible range ordering directly.
 - Required Firestore composite indexes must follow the query shapes used by the
   repository.
+
+## ADR-005 — Single Currency per Cart and Explicit Order Currency
+
+**Date:** 2026-09-16
+**Status:** Accepted
+**Phase:** 4
+
+### Decision
+
+A cart must not contain items in different currencies. The currency of the
+first item added becomes the cart currency, and items using another currency
+cannot be added until the cart is cleared or otherwise returned to a single
+currency. Prices are formatted dynamically with `Intl.NumberFormat` using the
+active locale and the cart currency.
+
+The unified currency is stored explicitly in each Firestore order document so
+the order remains auditable and does not depend on the customer's later locale
+or currency preference.
+
+### Rationale
+
+- A single currency keeps cart subtotals, checkout totals, and order records
+  mathematically meaningful without implicit conversion or exchange-rate drift.
+- `Intl.NumberFormat` provides locale-aware currency symbols, separators, and
+  decimal precision without maintaining custom formatting rules.
+- Persisting the currency on the order makes the monetary context explicit for
+  later fulfillment, administration, and reporting.
+
+### Consequences
+
+- Add-to-cart must reject a product whose currency differs from the current
+  cart currency and explain the constraint to the customer.
+- Checkout and order creation use the cart's unified currency for every line,
+  subtotal, and total.
+- Any future multi-currency cart requires a new decision covering conversion,
+  rounding, exchange-rate provenance, and order persistence.

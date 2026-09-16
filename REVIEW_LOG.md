@@ -90,6 +90,29 @@ the responsive modern navigation layout, and the shared application shell.
 
 **Verification run:** `npm run typecheck && npm run lint && npm run build` — all pass.
 
+## Phase 4 — Product Details, Cart & Checkout Flow
+
+**Final Outcome:** PASS
+**Approved On:** 2026-09-16
+**Review Cycles:** Final approval
+
+Phase 4 was accepted after completing and verifying the Product Details page,
+variant-aware cart management, the global Cart Drawer, and the Checkout flow.
+
+**Accepted areas:**
+
+- Product Details with localized product information, image gallery, variants,
+  stock validation, and direct add-to-cart.
+- Variant-aware centralized cart state with quantity updates, persistence, and
+  the global Cart Drawer.
+- Checkout shipping form, order summary, successful order creation, and cart
+  clearing only after the order is created successfully.
+- Variant internationalization (i18n) for AR/EN and dynamic currency
+  formatting, with the selected currency unified and explicitly documented in
+  the Firestore order document.
+
+**Verification run:** `npm run typecheck && npm run lint && npm run build` — all pass.
+
 ## Phase 3 — Product Catalog, Cloudinary Integration, & Filtering
 
 **Final Outcome:** PASS  
